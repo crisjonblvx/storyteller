@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useProjectWorkflow, type LocalProject } from '@renderer/stores/project-workflow'
+import { useAuthStore } from '@renderer/stores/auth'
 import storytellerLogo from '@renderer/assets/storyteller-logo.png'
 
 // ─── Intent-aware display helpers ───────────────────────────────────────────
@@ -77,6 +78,7 @@ function formatRelative(iso: string): string {
 
 export function DashboardPage() {
   const navigate = useNavigate()
+  const signOut = useAuthStore((s) => s.signOut)
   const projects = useProjectWorkflow((s) => s.projects)
   const updateProject = useProjectWorkflow((s) => s.updateProject)
   const deleteProject = useProjectWorkflow((s) => s.deleteProject)
@@ -138,6 +140,13 @@ export function DashboardPage() {
         <Link to="/" style={newStoryBtn}>
           ✦ New Story
         </Link>
+        <button
+          type="button"
+          style={signOutBtn}
+          onClick={async () => { await signOut(); navigate('/login') }}
+        >
+          Sign Out
+        </button>
         </div>
       </header>
 
@@ -286,6 +295,18 @@ const libraryBtn: React.CSSProperties = {
   fontSize: '14px',
   textDecoration: 'none',
   border: '1px solid rgba(99,102,241,0.25)',
+  flexShrink: 0,
+}
+
+const signOutBtn: React.CSSProperties = {
+  padding: '10px 16px',
+  borderRadius: '10px',
+  background: 'transparent',
+  color: '#9ca3af',
+  fontWeight: 600,
+  fontSize: '14px',
+  border: '1px solid rgba(255,255,255,0.12)',
+  cursor: 'pointer',
   flexShrink: 0,
 }
 

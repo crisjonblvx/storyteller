@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
   dedupeBeatsBySourceWindow,
   generateBrollPromptsFromBeats,
@@ -846,6 +846,8 @@ export function ProjectWorkspacePage() {
   }, [projectId, touchProject])
   const user = useAuthStore((s) => s.user)
   const demo = useAuthStore((s) => s.demo)
+  const signOut = useAuthStore((s) => s.signOut)
+  const navigate = useNavigate()
   /**
    * Only consider Supabase "live" when there's a real (non-demo) signed-in
    * user. Demo mode keeps Supabase off so non-UUID ids never reach the API.
@@ -4792,6 +4794,23 @@ export function ProjectWorkspacePage() {
               </button>
             </div>
             <span style={badge}>{project.status.replace('_', ' ')}</span>
+            <button
+              type="button"
+              onClick={async () => { await signOut(); navigate('/login') }}
+              style={{
+                padding: '6px 14px',
+                borderRadius: 8,
+                background: 'transparent',
+                color: '#9ca3af',
+                fontWeight: 600,
+                fontSize: 13,
+                border: '1px solid rgba(255,255,255,0.12)',
+                cursor: 'pointer',
+                flexShrink: 0,
+              }}
+            >
+              Sign out
+            </button>
           </div>
         </header>
 
