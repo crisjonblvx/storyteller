@@ -26,7 +26,7 @@ function Protected({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   const [showIntro, setShowIntro] = useState(() => {
-    return !localStorage.getItem('storyteller_intro_seen')
+    return !localStorage.getItem('storyteller_intro_seen_v2')
   })
   const init = useAuthStore((s) => s.init)
   useEffect(() => {
@@ -36,7 +36,7 @@ export default function App() {
   return (
     <>
       {showIntro && <IntroSplashScreen onComplete={() => {
-        localStorage.setItem('storyteller_intro_seen', '1')
+        localStorage.setItem('storyteller_intro_seen_v2', '1')
         setShowIntro(false)
       }} />}
       <RouteErrorBoundary>

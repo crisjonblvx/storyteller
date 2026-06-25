@@ -1,7 +1,8 @@
 const { app, BrowserWindow, net, protocol } = await import('electron')
 import { dirname, extname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { existsSync } from 'node:fs'
+import { createReadStream, existsSync, statSync } from 'node:fs'
+import { Readable } from 'node:stream'
 import dotenv from 'dotenv'
 import electronUpdater from 'electron-updater'
 const { autoUpdater } = electronUpdater
@@ -159,6 +160,49 @@ app.on('before-quit', () => {
     const resolvedPath = existsSync(fullPath) ? fullPath : join(rendererRoot, 'index.html')
     const ext = extname(resolvedPath)
     const mimeType = RENDERER_MIME_TYPES[ext] ?? 'application/octet-stream'
+
+    // For media files, use createReadStream with range-request support so that
+    // the video element can stream properly (same pattern as storyteller-media://).
+    const isMedia = ['.mp4', '.webm', '.mp3', '.wav', '.m4v', '.m4a'].includes(ext)
+    if (isMedia) {
+      let total: number
+      try {
+        total = statSync(resolvedPath).size
+      } catch {
+        return new Response('Not Found', { status: 404 })
+      }
+      const rangeHeader = request.headers.get('range')
+      if (rangeHeader) {
+        const m = /^bytes=(\d+)-(\d*)$/i.exec(rangeHeader.trim())
+        if (m) {
+          const start = Number(m[1])
+          const end = m[2] !== '' ? Number(m[2]) : total - 1
+          const length = end - start + 1
+          const nodeStream = createReadStream(resolvedPath, { start, end })
+          const body = Readable.toWeb(nodeStream) as ReadableStream
+          return new Response(body, {
+            status: 206,
+            headers: {
+              'Content-Type': mimeType,
+              'Content-Length': String(length),
+              'Accept-Ranges': 'bytes',
+              'Content-Range': `bytes ${start}-${end}/${total}`
+            }
+          })
+        }
+      }
+      const nodeStream = createReadStream(resolvedPath)
+      const body = Readable.toWeb(nodeStream) as ReadableStream
+      return new Response(body, {
+        status: 200,
+        headers: {
+          'Content-Type': mimeType,
+          'Content-Length': String(total),
+          'Accept-Ranges': 'bytes'
+        }
+      })
+    }
+
     const fileResponse = await net.fetch(pathToFileURL(resolvedPath).href)
     return new Response(fileResponse.body, {
       status: fileResponse.status,

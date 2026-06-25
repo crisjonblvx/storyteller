@@ -73,6 +73,7 @@ export function registerMediaProtocolSchemes(): void {
         standard: true,
         secure: true,
         supportFetchAPI: true,
+        stream: true,
         corsEnabled: true
       }
     }
