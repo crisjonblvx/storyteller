@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import { readFile, unlink } from 'node:fs/promises'
 import { randomBytes } from 'node:crypto'
 import ffmpegPath from 'ffmpeg-static'
+import { resolveUnpackedBinary } from './bin-path.js'
 
 export interface BeatAnalysisResult {
   ok: true
@@ -29,7 +30,7 @@ const SAMPLE_RATE = 44100
 export async function analyzeBeat(
   filePath: string
 ): Promise<BeatAnalysisResult | BeatAnalysisError> {
-  const bin = ffmpegPath
+  const bin = ffmpegPath ? resolveUnpackedBinary(ffmpegPath) : null
   if (!bin) return { ok: false, error: 'ffmpeg-static binary not found' }
 
   const tmpPcm = join(tmpdir(), `storyteller-beat-${randomBytes(6).toString('hex')}.f32`)

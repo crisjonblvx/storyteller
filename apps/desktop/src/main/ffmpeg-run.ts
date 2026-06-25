@@ -7,9 +7,10 @@ import {
   type DeliveryAspectRatio
 } from '@storyteller/shared'
 import { runFfprobe } from './ffprobe.js'
+import { resolveUnpackedBinary } from './bin-path.js'
 
 export function runFfmpeg(args: string[]): Promise<void> {
-  const bin = ffmpegPath
+  const bin = ffmpegPath ? resolveUnpackedBinary(ffmpegPath) : null
   if (!bin) return Promise.reject(new Error('ffmpeg-static binary not found'))
   return new Promise((resolve, reject) => {
     const child = spawn(bin, args, { stdio: ['ignore', 'pipe', 'pipe'] })

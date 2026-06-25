@@ -3,8 +3,9 @@ import { existsSync } from 'node:fs'
 import ffprobeStatic from 'ffprobe-static'
 import { parseFfprobeJson } from '@storyteller/media'
 import type { MediaProbeResult } from '@storyteller/media'
+import { resolveUnpackedBinary } from './bin-path.js'
 
-const ffprobePath = ffprobeStatic.path
+const ffprobePath = resolveUnpackedBinary(ffprobeStatic.path)
 
 export type ProbeOk = { ok: true; data: MediaProbeResult }
 export type ProbeErr = {

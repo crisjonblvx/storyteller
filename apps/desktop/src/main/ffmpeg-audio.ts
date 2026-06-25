@@ -1,11 +1,12 @@
 import { spawn } from 'node:child_process'
 import ffmpegPath from 'ffmpeg-static'
+import { resolveUnpackedBinary } from './bin-path.js'
 
 export function getFfmpegPath(): string {
   if (!ffmpegPath) {
     throw new Error('ffmpeg-static did not provide a binary path')
   }
-  return ffmpegPath
+  return resolveUnpackedBinary(ffmpegPath)
 }
 
 /**
