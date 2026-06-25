@@ -45,6 +45,7 @@ export function mapTranscriptionErrorForUser(raw: string): string {
   if (
     lower.includes('file not found') ||
     lower.includes('source_file_missing') ||
+    lower.includes('media analysis failed') ||
     (lower.includes('ffprobe') && lower.includes('not found'))
   ) {
     return "We couldn't locate your media file on this computer. If you moved, renamed, or deleted it, go back to Upload and add the file again (use **Select files** or drag-and-drop in the Storyteller app window)."
@@ -57,6 +58,17 @@ export function mapTranscriptionErrorForUser(raw: string): string {
   }
   if (lower.includes('could not find') && lower.includes('column')) {
     return "Your cloud database is missing a required schema update for local media. Retry in a moment — if this persists, contact support."
+  }
+  // Catch-all: strip any remaining vendor/implementation details before display
+  if (
+    lower.includes('openai') ||
+    lower.includes('anthropic') ||
+    lower.includes('whisper') ||
+    lower.includes('api_key') ||
+    lower.includes('.env') ||
+    lower.includes('docs/')
+  ) {
+    return 'Storyteller AI encountered an error. Please try again or contact support.'
   }
   return raw
 }

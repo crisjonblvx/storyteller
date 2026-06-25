@@ -87,8 +87,7 @@ export function LoginPage() {
         </form>
         {!supabaseConfigured && (
           <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 16 }}>
-            Set <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code> in your <code>.env</code> (repo
-            root or <code>apps/desktop/</code>) to enable accounts. You can still use Storyteller offline.
+            Cloud accounts are not enabled in this build. You can still use Storyteller offline.
           </p>
         )}
         <button

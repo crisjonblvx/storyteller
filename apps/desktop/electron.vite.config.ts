@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
+import { loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 
 const root = dirname(fileURLToPath(import.meta.url))
@@ -39,9 +40,29 @@ function resolveRendererEnvDir(): string {
 
 const sharedEnvDir = resolveRendererEnvDir()
 
+/**
+ * Load all env vars (no prefix filter) from the repo .env at build time so
+ * non-VITE_ keys like OPENAI_API_KEY can be baked into the main-process
+ * bundle via `define`. In a packaged Electron app the .env file is never
+ * present on disk, so dotenv.config() in index.ts finds nothing — the only
+ * reliable way to deliver secrets is to embed them at compile time.
+ */
+const buildEnv = loadEnv('production', sharedEnvDir, '')
+const bake = (key: string): string =>
+  JSON.stringify(process.env[key] ?? buildEnv[key] ?? '')
+
 export default defineConfig({
   main: {
     envDir: sharedEnvDir,
+    define: {
+      'process.env.OPENAI_API_KEY': bake('OPENAI_API_KEY'),
+      'process.env.OPENAI_MODEL': bake('OPENAI_MODEL'),
+      'process.env.STORYTELLER_REVIEW_MODEL': bake('STORYTELLER_REVIEW_MODEL'),
+      'process.env.STORYTELLER_REVIEW_PROVIDER': bake('STORYTELLER_REVIEW_PROVIDER'),
+      'process.env.STORYTELLER_AI_MODE': bake('STORYTELLER_AI_MODE'),
+      'process.env.STORYTELLER_WHISPER_CONCURRENCY': bake('STORYTELLER_WHISPER_CONCURRENCY'),
+      'process.env.STORYTELLER_DIRECTOR_MAX_CANDIDATES': bake('STORYTELLER_DIRECTOR_MAX_CANDIDATES'),
+    },
     plugins: [
       externalizeDepsPlugin({
         exclude: mainBundleWorkspacePkgs

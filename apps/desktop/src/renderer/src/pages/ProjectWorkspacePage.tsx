@@ -4855,8 +4855,7 @@ export function ProjectWorkspacePage() {
                   </div>
                   {project && !supabaseConfigured && (
                     <div style={{ padding: '12px 16px', color: '#a1a1aa', fontSize: 13, background: '#1c1c1f', borderRadius: 8, marginBottom: 20 }}>
-                      Optional: set <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code> in{' '}
-                      <code>apps/desktop/.env</code> to sync transcripts and project metadata to the cloud.
+                      Optional: configure cloud sync to save transcripts and project metadata across devices.
                     </div>
                   )}
 

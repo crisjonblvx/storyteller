@@ -109,12 +109,12 @@ export async function transcribeAsset(params: {
             'SOURCE_FILE_MISSING: The media file could not be found on disk. Reselect it in Storyteller (Upload step) and try again.'
         }
       }
-      return { ok: false, error: `ffprobe failed: ${probe.error}` }
+      return { ok: false, error: `Media analysis failed: ${probe.error}` }
     }
 
     const durationSec = probe.data.durationSeconds ?? 0
     if (!Number.isFinite(durationSec) || durationSec <= 0) {
-      return { ok: false, error: 'Could not read media duration (ffprobe). File may be corrupt or unsupported.' }
+      return { ok: false, error: 'Could not read media duration. File may be corrupt or unsupported.' }
     }
     const hasVideo = inferHasVideo(assetType, probe.data.hasVideoStream)
 

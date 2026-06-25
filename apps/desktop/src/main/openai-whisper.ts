@@ -20,7 +20,7 @@ export async function whisperFromBytes(
 ): Promise<WhisperChunkResult> {
   const apiKey = process.env.OPENAI_API_KEY
   if (!apiKey) {
-    return { ok: false, error: 'OPENAI_API_KEY is not set (add it to your .env — see docs/transcription.md).' }
+    return { ok: false, error: 'Storyteller AI is not configured. Please contact support.' }
   }
 
   const response = await postWhisperTranscription({
@@ -38,7 +38,7 @@ export async function whisperFromBytes(
   try {
     json = JSON.parse(response.text) as WhisperVerboseJson
   } catch {
-    return { ok: false, error: 'Invalid JSON from Whisper API' }
+    return { ok: false, error: 'Transcription service returned an unexpected response. Please try again.' }
   }
 
   const raw = json.segments ?? []

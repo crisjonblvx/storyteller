@@ -45,6 +45,28 @@ import {
 
 const MAX_READ_BYTES = 600 * 1024 * 1024
 
+/**
+ * Strip vendor/implementation details from error messages before they reach
+ * the renderer. Users must never see API key names, provider names, internal
+ * file paths, or developer docs references.
+ */
+function sanitizeErrorMessage(msg: string): string {
+  let s = msg
+  // API key not configured
+  s = s.replace(/OPENAI_API_KEY[^.]*\./gi, 'Storyteller AI service is not configured. Please contact support.')
+  // Strip parenthetical hints like "(add it to your .env — see docs/…)"
+  s = s.replace(/\(add it to your \.env[^)]*\)/gi, '')
+  s = s.replace(/see docs\/[^\s).]*/gi, '')
+  // Strip file-system paths
+  s = s.replace(/\/(?:Users|private|home|var|tmp|Applications)\/[^\s,;'"]+/g, '[path]')
+  // Replace provider names with the product name
+  s = s.replace(/\bWhisper\b/gi, 'Storyteller AI')
+  s = s.replace(/\bOpenAI\b/gi, 'Storyteller AI')
+  s = s.replace(/\bAnthropic\b/gi, 'Storyteller AI')
+  s = s.replace(/\b(?:Claude|GPT-?\d*)\b/g, 'Storyteller AI')
+  return s.trim()
+}
+
 export function registerIpc(): void {
   ipcMain.removeHandler('app:status')
   ipcMain.removeHandler('media:probe')
@@ -247,13 +269,22 @@ export function registerIpc(): void {
     const onProgress = (msg: TranscriptionProgressPayload) => {
       event.sender.send('transcription:progress', msg)
     }
-    return getStorytellerAiGateway().transcribe({
-      signedUrl: typeof p.signedUrl === 'string' ? p.signedUrl : undefined,
-      localPath: typeof p.localPath === 'string' ? p.localPath : undefined,
-      filename,
-      assetType: typeof p.assetType === 'string' ? p.assetType : undefined,
-      onProgress
-    })
+    try {
+      const result = await getStorytellerAiGateway().transcribe({
+        signedUrl: typeof p.signedUrl === 'string' ? p.signedUrl : undefined,
+        localPath: typeof p.localPath === 'string' ? p.localPath : undefined,
+        filename,
+        assetType: typeof p.assetType === 'string' ? p.assetType : undefined,
+        onProgress
+      })
+      if (!result.ok) {
+        return { ok: false as const, error: sanitizeErrorMessage(result.error) }
+      }
+      return result
+    } catch (err) {
+      const raw = err instanceof Error ? err.message : String(err)
+      return { ok: false as const, error: sanitizeErrorMessage(raw) }
+    }
   })
 
   ipcMain.handle('analysis:groundedReview', async (_event, payload: unknown) => {
