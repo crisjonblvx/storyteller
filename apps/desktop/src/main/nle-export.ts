@@ -13,6 +13,7 @@ export type NleExportPackagePayload = {
   additionalFiles?: Array<{ filename: string; content: string; format?: 'xmeml' | 'md' | 'json' | 'fcpxml' }>
   manifest: unknown
   readme: string
+  exportSummaryText?: string
   /** Exact `file:` URIs embedded in the interchange XML, keyed by Storyteller asset id. */
   mediaUrisByAssetId?: Record<string, string>
 }
@@ -35,12 +36,14 @@ function readmeWithDiskFileList(
   originalReadme: string,
   hasXmeml: boolean,
   primaryTimelineFilename: string,
-  copiedMediaCount: number
+  copiedMediaCount: number,
+  hasExportSummary: boolean
 ): string {
   const lines = [
     'Storyteller NLE handoff package',
     '',
     'Files in this folder:',
+    ...(hasExportSummary ? ['- export-summary.txt — what was exported vs manifest-only (read this first).'] : []),
     `- ${primaryTimelineFilename} — main timeline interchange file.`,
     ...(hasXmeml
       ? [
@@ -409,10 +412,21 @@ export async function writeNleExportPackageToDisk(params: {
     onProgress?.({ phase: 'writing_manifest', detail: 'manifest.json' })
     await writeFile(join(outDir, 'manifest.json'), JSON.stringify(pkg.manifest, null, 2), 'utf8')
 
+    if (pkg.exportSummaryText?.trim()) {
+      onProgress?.({ phase: 'writing_readme', detail: 'export-summary.txt' })
+      await writeFile(join(outDir, 'export-summary.txt'), pkg.exportSummaryText, 'utf8')
+    }
+
     onProgress?.({ phase: 'writing_readme', detail: 'README.txt' })
     await writeFile(
       join(outDir, 'README.txt'),
-      readmeWithDiskFileList(pkg.readme, hasXmeml, timelineName, copiedCount),
+      readmeWithDiskFileList(
+        pkg.readme,
+        hasXmeml,
+        timelineName,
+        copiedCount,
+        Boolean(pkg.exportSummaryText?.trim())
+      ),
       'utf8'
     )
 

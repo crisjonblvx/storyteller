@@ -1,5 +1,5 @@
 {
-  "name": "@storyteller/analysis",
+  "name": "@storyteller/audio",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -8,7 +8,10 @@
   },
   "types": "./src/index.ts",
   "dependencies": {
-    "@storyteller/shared": "*",
-    "@storyteller/timeline": "*"
+    "@storyteller/timeline": "*",
+    "@storyteller/analysis": "*"
+  },
+  "devDependencies": {
+    "vitest": "^2.1.8"
   }
 }

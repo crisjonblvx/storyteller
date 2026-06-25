@@ -1,4 +1,5 @@
 export * from './model.js'
+export * from './audio-director.js'
 export * from './assembly-pacing.js'
 export * from './export-dimensions.js'
 export * from './builder.js'

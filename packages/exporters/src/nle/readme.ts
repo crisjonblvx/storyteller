@@ -8,7 +8,7 @@ export function readmeForNleTarget(
     additionalFilenames?: string[]
   }
 ): string {
-  const { primaryTimelineFilename, manifestFilename = 'asset-manifest.json', additionalFilenames = [] } = params
+  const { primaryTimelineFilename, manifestFilename = 'manifest.json', additionalFilenames = [] } = params
   const extra = additionalFilenames.length ? `\n- **Additional:** ${additionalFilenames.map((f) => `\`${f}\``).join(', ')}` : ''
 
   const relink = `
@@ -18,22 +18,40 @@ Use \`${manifestFilename}\` to see **local paths** and **cloud storage keys**. O
 `
 
   if (target === 'final-cut-pro') {
-    return `# Storyteller → Final Cut Pro
+    return `# Storyteller → Final Cut Pro (Rough Cut Export — Beta)
 
 This package was generated for **Apple Final Cut Pro** from Storyteller's **canonical timeline JSON** (single source of truth).
+
+**Storyteller edits. Final Cut finishes.** This export preserves editorial decisions, timing, source media, and markers — not layered composites.
 
 ## Contents
 
 - **\`${primaryTimelineFilename}\`** — FCPXML 1.9 interchange (import as a Library event or project).
-- **\`${manifestFilename}\`** — Asset manifest (paths, roles, markers, text overlay refs).${extra}
+- **\`export-summary.txt\`** — What was exported vs provided in the manifest only (read this first).
+- **\`${manifestFilename}\`** — Canonical asset manifest (paths, roles, markers, text overlay refs).${extra}
 
 ${relink}
 
 ## Import (Final Cut Pro)
 
-1. **File → Import → XML…** and choose \`${primaryTimelineFilename}\`.
-2. If clips are offline, **Relink Files** using paths from the manifest (local machine) or re-download cloud media.
-3. **Markers** and **text overlay timing** are listed in \`${manifestFilename}\` — recreate titles in FCP using Storyteller's \`textOverlayRefs\` if needed.
+1. Read **\`export-summary.txt\`** so you know what's in the interchange vs manifest-only.
+2. **File → Import → XML…** and choose \`${primaryTimelineFilename}\`.
+3. If clips are offline, **Relink Files** using paths from the manifest (local machine) or the \`media/\` folder in this package.
+4. **Markers** and **text overlay timing** are listed in \`${manifestFilename}\` — recreate titles in FCP using Storyteller's \`textOverlayRefs\` if needed.
+
+## What's included (beta)
+
+- Primary A-roll rough cut (spine)
+- Source media (when available locally)
+- Timeline metadata in \`${manifestFilename}\`
+
+## Not included in FCPXML (by design)
+
+- B-roll overlay tracks
+- Title / graphics overlays
+- Sound-design lane placements
+
+These remain in \`${manifestFilename}\` for manual finishing while Final Cut XML compatibility continues to improve.
 
 ---
 Generated for **Final Cut Pro** · Storyteller canonical timeline export

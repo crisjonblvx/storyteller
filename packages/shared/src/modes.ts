@@ -1,4 +1,4 @@
-export const STORY_MODES = ['story', 'journalism', 'creator', 'music_video', 'commercial', 'documentary'] as const
+export const STORY_MODES = ['story', 'journalism', 'creator', 'highlight', 'music_video', 'commercial', 'documentary'] as const
 export type StoryMode = (typeof STORY_MODES)[number]
 
 export function isStoryMode(value: string): value is StoryMode {
@@ -15,6 +15,7 @@ export type StoryIntent =
   | 'social_reel'
   | 'event_highlight'
   | 'brand_story'
+  | 'sports_highlight'
 
 export type PrimaryGoal = 'fast_social' | 'professional' | 'broadcast'
 
@@ -29,6 +30,7 @@ export function intentToMode(intent: StoryIntent): StoryMode {
     social_reel: 'creator',
     event_highlight: 'creator',
     brand_story: 'story',
+    sports_highlight: 'highlight',
   }
   return map[intent]
 }

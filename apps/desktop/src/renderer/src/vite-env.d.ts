@@ -279,6 +279,11 @@ interface StorytellerBridge {
       segmentsByAsset?: Record<string, unknown>
       style?: { fontSize?: number; marginVerticalPx?: number }
     }
+    soundDesign?: {
+      slots: unknown[]
+      resolutions: unknown[]
+      audioDna: unknown
+    }
   }) => Promise<{ ok: true } | { ok: false; error: string }>
   onExportProgress?: (handler: (p: ExportProgressPayload) => void) => () => void
   pickExportFolder?: () => Promise<{ ok: true; path: string } | { ok: false; canceled: boolean }>
@@ -295,6 +300,7 @@ interface StorytellerBridge {
       }>
       manifest: unknown
       readme: string
+      exportSummaryText?: string
       mediaUrisByAssetId?: Record<string, string>
     }
   }) => Promise<{ ok: true; folderPath: string } | { ok: false; error: string }>

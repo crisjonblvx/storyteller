@@ -22,8 +22,11 @@ import {
   getPromptsForMode,
   buildThreeDTextPrompts,
   has3DTextSignal,
-  type GroundedGraphicsMode
+  type GroundedGraphicsMode,
+  AUDIO_DNA,
+  type AudioDnaId
 } from '@storyteller/analysis'
+import { resolveSoundDesignSlots, SOUND_LIBRARY } from '@storyteller/audio'
 import {
   addOverlayEvent,
   attachGeneratedGraphicsClip,
@@ -71,7 +74,11 @@ import {
   isTranscribableMediaAsset,
   type Asset,
   type BrollPrompt,
-  type TranscriptSegment
+  type TranscriptSegment,
+  type TimelineSegment,
+  type GamePhase,
+  type HighlightClipRole,
+  type HighlightSettings,
 } from '@storyteller/shared'
 import { TEXT_PRESET_PACKS } from '@storyteller/text-fx'
 import { getProjectFormat, isTemplateBrollIdea, isTemplateBrollPrompt, pickRecommendedOffer } from '@storyteller/shared'
@@ -116,6 +123,8 @@ import { AssetUploadZone } from '@renderer/components/AssetUploadZone'
 import { UploadedAssetsPanel } from '@renderer/components/UploadedAssetsPanel'
 import { JournalismIngestPanel } from '@renderer/components/JournalismIngestPanel'
 import { CreatorIngestPanel } from '@renderer/components/CreatorIngestPanel'
+import { HighlightIngestPanel, type BeatSyncConfig } from '@renderer/components/HighlightIngestPanel'
+import { HighlightTimeline } from '@renderer/components/HighlightTimeline'
 import { MusicVideoIngestPanel } from '@renderer/components/MusicVideoIngestPanel'
 import { IntroBuilderPanel, type IntroDurationSec } from '@renderer/components/IntroBuilderPanel'
 import { TimelineEditor } from '@renderer/components/TimelineEditor'
@@ -131,9 +140,11 @@ import {
   AddTextOverlayPanel
 } from '@renderer/components/overlays/EnhancePanels'
 import { useLocalAssetsStore } from '@renderer/stores/local-assets'
+import { useLocalTimelineStore } from '@renderer/stores/local-timeline'
 import { getIntentColors } from '@renderer/lib/intent-colors'
+import { SoundDesignerPanel } from '@renderer/components/SoundDesignerPanel'
 
-type StepId = 'upload' | 'goal' | 'review' | 'timeline' | 'enhance' | 'export'
+type StepId = 'upload' | 'goal' | 'review' | 'timeline' | 'enhance' | 'audio' | 'export'
 
 const WORKFLOW_STEPS: { id: StepId; label: string; description: string }[] = [
   { id: 'upload', label: '1. Upload', description: 'Add media' },
@@ -141,7 +152,8 @@ const WORKFLOW_STEPS: { id: StepId; label: string; description: string }[] = [
   { id: 'review', label: '3. Review', description: 'Moments' },
   { id: 'timeline', label: '4. Timeline', description: 'Build cut' },
   { id: 'enhance', label: '5. Enhance', description: 'B-roll & Top Layer' },
-  { id: 'export', label: '6. Export', description: 'Deliver' }
+  { id: 'audio', label: '6. Audio Director', description: 'Sound design' },
+  { id: 'export', label: '7. Export', description: 'Deliver' }
 ]
 
 const GROUNDED_REVIEW_VERSION = 23
@@ -716,7 +728,7 @@ const EXPORT_PRESETS = [
   { id: 'horizontal-4k', label: 'Horizontal 4K', icon: '🖥️', desc: '3840×2160 MP4' },
   { id: 'vertical-1080p', label: 'Vertical 1080p', icon: '📱', desc: '1080×1920 MP4' },
   { id: 'vertical-4k', label: 'Vertical 4K', icon: '📱', desc: '2160×3840 MP4' },
-  { id: 'nle', label: 'NLE Package', icon: '🎬', desc: 'XML / FCPXML + Assets' }
+  { id: 'nle', label: 'NLE Rough Cut', icon: '🎬', desc: 'FCPXML + manifest + media' }
 ] as const
 
 function StepRail({ steps, activeStep, onStepClick, intentColors }: { 
@@ -833,12 +845,29 @@ function isImageAsset(asset: Asset): boolean {
   return inferAssetMediaKindFromPath(asset.local_path ?? asset.storage_path ?? asset.original_filename) === 'image'
 }
 
+function debounce<T extends (...args: Parameters<T>) => void>(fn: T, ms: number): T {
+  let timer: ReturnType<typeof setTimeout>
+  return ((...args: Parameters<T>) => {
+    clearTimeout(timer)
+    timer = setTimeout(() => fn(...args), ms)
+  }) as T
+}
+
 export function ProjectWorkspacePage() {
   const { projectId = '' } = useParams()
   const projects = useProjectWorkflow((s) => s.projects)
   const project = useMemo(() => projects.find((p) => p.id === projectId), [projects, projectId])
   const intentColors = getIntentColors(project?.intent)
   const updateProject = useProjectWorkflow((s) => s.updateProject)
+  const setTimeline = useLocalTimelineStore((s) => s.setTimeline)
+  const saveHighlightSettingsDebounced = useMemo(
+    () =>
+      debounce((pid: string, settings: HighlightSettings) => {
+        updateProject(pid, { highlightSettings: settings })
+      }, 800),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  )
   const touchProject = useProjectWorkflow((s) => s.touchProject)
   /** Stamp `lastOpenedAt` once on mount so the dashboard "Recent" sort stays accurate. */
   useEffect(() => {
@@ -891,6 +920,11 @@ export function ProjectWorkspacePage() {
   const [creatorAssembling, setCreatorAssembling] = useState(false)
   const [creatorAssembleError, setCreatorAssembleError] = useState<string | null>(null)
   const [creatorTargetFormat, setCreatorTargetFormat] = useState<'short' | 'long'>('long')
+  const [timelineSegments, setTimelineSegments] = useState<TimelineSegment[]>(
+    () => project?.highlightSettings?.timelineSegments ?? project?.timelineSegments ?? []
+  )
+  const [autoAssigning, setAutoAssigning] = useState(false)
+  const [autoAssignError, setAutoAssignError] = useState<string | null>(null)
   const [reviewTab, setReviewTab] = useState<'soundbites' | 'transcript' | 'story'>('soundbites')
   const [activeFilter, setActiveFilter] = useState<SoundbiteFilter>('All')
   const [nleTarget, setNleTarget] = useState<NleTarget>('davinci-resolve')
@@ -2388,21 +2422,37 @@ export function ProjectWorkspacePage() {
   const graphicsSlots = useMemo(() => sequence.graphicsSlots ?? [], [sequence.graphicsSlots])
   const pauseGapsList = useMemo(() => listPauseGaps(sequence), [sequence])
 
+  const soundDesignPayload = useMemo(() => {
+    const slots = sequence.soundDesignSlots ?? []
+    const acceptedSlots = slots.filter((s) => s.status === 'accepted')
+    if (acceptedSlots.length === 0) return undefined
+    const audioDnaId = (project?.audioDnaId ?? 'netflix_documentary') as AudioDnaId
+    const audioDna = AUDIO_DNA[audioDnaId] ?? AUDIO_DNA.netflix_documentary
+    const resolutions = resolveSoundDesignSlots({
+      slots: acceptedSlots,
+      audioDnaId,
+      library: SOUND_LIBRARY
+    })
+    return { slots: acceptedSlots, resolutions, audioDna }
+  }, [sequence.soundDesignSlots, project?.audioDnaId])
+
   const nleExport = useMemo(
     () =>
       exportForNle(nleTarget, {
+        projectTitle: project?.title,
         sequence: sequenceForExport,
         assetPathsById: assetPathsForTimeline,
         assets,
-        textOverlayRefs
+        textOverlayRefs,
+        soundDesign: soundDesignPayload
       }),
-    [assetPathsForTimeline, assets, nleTarget, sequenceForExport, textOverlayRefs]
+    [assetPathsForTimeline, assets, nleTarget, project?.title, sequenceForExport, textOverlayRefs, soundDesignPayload]
   )
 
   const nleHandoffButtonLabel = useMemo(() => {
     switch (nleTarget) {
       case 'final-cut-pro':
-        return 'Export for Final Cut…'
+        return 'Export Final Cut Rough Cut…'
       case 'premiere-pro':
         return 'Export for Premiere…'
       case 'davinci-resolve':
@@ -2826,6 +2876,136 @@ export function ProjectWorkspacePage() {
     }
   }
 
+  async function onAssembleHighlightReel(config?: BeatSyncConfig) {
+    if (!project) return
+
+    // Persist beat-sync metadata into the project before assembly so
+    // downstream AI steps can read it from project state.
+    if (config?.musicTrackName) {
+      const beatSyncLine = config.beatSyncEnabled
+        ? `Beat-sync: enabled. Music track: ${config.musicTrackName}.`
+        : undefined
+      const baseDir = (project.aiDirection ?? '').replace(/Beat-sync:[^.]*\./g, '').trim()
+      updateProject(projectId, {
+        highlightMusicTrackName: config.musicTrackName,
+        highlightBeatSyncEnabled: config.beatSyncEnabled,
+        ...(beatSyncLine
+          ? { aiDirection: [baseDir, beatSyncLine].filter(Boolean).join(' ') }
+          : {})
+      })
+    }
+
+    // TODO: replace with buildHighlightReel() once the highlight-specific
+    // assembly function is implemented; currently delegates to the creator-cut
+    // builder which shares the same timeline pipeline.
+    return onAssembleCreatorCut()
+  }
+
+  /**
+   * Auto-assign all tagged (non-unassigned) clips that don't yet have a
+   * TimelineSegment, using AI to pick the best game phase for each.
+   */
+  async function handleAutoAssign() {
+    if (!project) return
+    setAutoAssigning(true)
+    setAutoAssignError(null)
+    try {
+      const clipsToAssign = assets.filter(
+        (a) =>
+          (a.asset_type === 'video' || a.asset_type === 'audio') &&
+          a.highlight_clip_role &&
+          a.highlight_clip_role !== 'unassigned' &&
+          !timelineSegments.some((s) => s.assetId === a.id)
+      )
+      if (clipsToAssign.length === 0) {
+        setAutoAssignError(
+          'All tagged clips are already on the timeline. Remove segments or tag more clips first.'
+        )
+        return
+      }
+
+      const sport = project.highlightSettings?.sport ?? 'Basketball'
+      const res = await window.storyteller?.autoAssignHighlightClips?.({
+        clips: clipsToAssign.map((a) => ({
+          id: a.id,
+          role: a.highlight_clip_role ?? 'unassigned',
+          file_name:
+            a.original_filename ??
+            a.local_path?.split(/[/\\]/).pop() ??
+            a.storage_path?.split('/').pop() ??
+            a.id,
+          duration_seconds: a.duration_seconds,
+        })),
+        sport,
+      })
+
+      if (!res || !res.ok) {
+        setAutoAssignError(res?.error ?? 'Auto-assign failed. Try again.')
+        return
+      }
+
+      const newSegments: TimelineSegment[] = res.assignments.map((a, i) => ({
+        id: crypto.randomUUID(),
+        assetId: a.assetId,
+        role: a.role as HighlightClipRole,
+        phase: a.phase as GamePhase,
+        highlightScore: a.highlightScore,
+        confidence: a.confidence,
+        orderInPhase: a.orderInPhase ?? i + 1,
+        durationSeconds:
+          assets.find((asset) => asset.id === a.assetId)?.duration_seconds ?? undefined,
+      }))
+
+      const assignedSegments = [
+        ...timelineSegments.filter((s) => !newSegments.some((ns) => ns.assetId === s.assetId)),
+        ...newSegments,
+      ]
+      setTimelineSegments(assignedSegments)
+      updateProject(projectId, {
+        highlightSettings: {
+          ...project.highlightSettings,
+          timelineSegments: assignedSegments,
+        } as HighlightSettings,
+      })
+    } catch (e) {
+      setAutoAssignError(e instanceof Error ? e.message : 'Auto-assign failed.')
+    } finally {
+      setAutoAssigning(false)
+    }
+  }
+
+  /**
+   * Handle a clip dragged from HighlightIngestPanel and dropped onto a
+   * phase lane in HighlightTimeline.
+   */
+  function handleClipDrop(assetId: string, role: HighlightClipRole, phase: GamePhase) {
+    const existing = timelineSegments.find((s) => s.assetId === assetId)
+    let nextSegments: TimelineSegment[]
+    if (existing) {
+      nextSegments = timelineSegments.map((s) => (s.assetId === assetId ? { ...s, phase } : s))
+    } else {
+      const asset = assets.find((a) => a.id === assetId)
+      const orderInPhase = timelineSegments.filter((s) => s.phase === phase).length + 1
+      const newSegment: TimelineSegment = {
+        id: crypto.randomUUID(),
+        assetId,
+        role,
+        phase,
+        highlightScore: 0,
+        orderInPhase,
+        durationSeconds: asset?.duration_seconds ?? undefined,
+      }
+      nextSegments = [...timelineSegments, newSegment]
+    }
+    setTimelineSegments(nextSegments)
+    if (project) {
+      saveHighlightSettingsDebounced(project.id, {
+        ...project.highlightSettings,
+        timelineSegments: nextSegments,
+      } as HighlightSettings)
+    }
+  }
+
   async function onAnalyzeMusicBeat(filePath: string) {
     setBeatAnalyzing(true)
     setBeatAnalysisError(null)
@@ -3029,7 +3209,8 @@ export function ProjectWorkspacePage() {
         assetPathsById: assetPathsForTimeline,
         captions: burnCaptions
           ? { burn: true, segmentsByAsset: segmentsByAsset ?? {} }
-          : undefined
+          : undefined,
+        soundDesign: soundDesignPayload
       })
       if (!res.ok) {
         setMp4Error(res.error)
@@ -3074,10 +3255,12 @@ export function ProjectWorkspacePage() {
       await Promise.all(checks)
     }
     const nleExportForWrite = exportForNle(nleTarget, {
+      projectTitle: project?.title,
       sequence: sequenceForExport,
       assetPathsById: checkedAssetPathsById,
       assets,
-      textOverlayRefs
+      textOverlayRefs,
+      soundDesign: soundDesignPayload
     })
     if (missingOnDiskAssetIds.size > 0) {
       const labels = [...missingOnDiskAssetIds]
@@ -3114,6 +3297,7 @@ export function ProjectWorkspacePage() {
       })),
       manifest: nleExportForWrite.manifest,
       readme: nleExportForWrite.readme,
+      exportSummaryText: nleExportForWrite.exportSummaryText,
       mediaUrisByAssetId
     }
     try {
@@ -4827,30 +5011,34 @@ export function ProjectWorkspacePage() {
                         ? '1. Upload Show Footage'
                         : project?.mode === 'journalism'
                         ? '1. Import Field Footage'
-                        : project?.mode === 'creator'
-                          ? '1. Add Your Footage'
-                          : project?.mode === 'music_video'
-                            ? '1. Add Your Footage & Music'
-                            : project?.mode === 'commercial'
-                              ? '1. Add Your Assets'
-                              : project?.mode === 'documentary'
-                                ? '1. Import Your Footage'
-                                : '1. Upload Video & Audio'}
+                        : project?.mode === 'highlight'
+                          ? '1. Add Your Game Footage'
+                          : project?.mode === 'creator'
+                            ? '1. Add Your Footage'
+                            : project?.mode === 'music_video'
+                              ? '1. Add Your Footage & Music'
+                              : project?.mode === 'commercial'
+                                ? '1. Add Your Assets'
+                                : project?.mode === 'documentary'
+                                  ? '1. Import Your Footage'
+                                  : '1. Upload Video & Audio'}
                     </h2>
                     <p style={stepDesc}>
                       {project?.intent === 'brand_intro'
                         ? 'Upload your show or podcast recording. On the next step, Storyteller will analyze it so you can pick the best soundbites for a cinematic intro.'
                         : project?.mode === 'journalism'
                         ? 'Import your field footage — interviews, standup, B-roll, and voiceover. Assign clip roles, then assemble.'
-                        : project?.mode === 'creator'
-                          ? 'Drop in your raw clips — hook moments, hero content, B-roll, and your recap. Tag each clip, then let Storyteller AI build your cut.'
-                          : project?.mode === 'music_video'
-                            ? 'Add your performance footage, B-roll, and audio tracks. Storyteller will sync visuals to your music.'
-                            : project?.mode === 'commercial'
-                              ? 'Import your product footage, testimonials, and brand assets. Storyteller will structure your ad narrative.'
-                              : project?.mode === 'documentary'
-                                ? 'Import your interviews, archival footage, and narration. Storyteller will help you craft the long-form story.'
-                                : 'Add your raw media. Local import keeps large files on your device.'}
+                        : project?.mode === 'highlight'
+                          ? 'Drop in your game footage — hype moments, plays, reactions, and crowd shots. Tag each clip, then let Storyteller build your highlight reel.'
+                          : project?.mode === 'creator'
+                            ? 'Drop in your raw clips — hook moments, hero content, B-roll, and your recap. Tag each clip, then let Storyteller AI build your cut.'
+                            : project?.mode === 'music_video'
+                              ? 'Add your performance footage, B-roll, and audio tracks. Storyteller will sync visuals to your music.'
+                              : project?.mode === 'commercial'
+                                ? 'Import your product footage, testimonials, and brand assets. Storyteller will structure your ad narrative.'
+                                : project?.mode === 'documentary'
+                                  ? 'Import your interviews, archival footage, and narration. Storyteller will help you craft the long-form story.'
+                                  : 'Add your raw media. Local import keeps large files on your device.'}
                     </p>
                   </div>
                   {project && !supabaseConfigured && (
@@ -4889,6 +5077,63 @@ export function ProjectWorkspacePage() {
                       onUploaded={() => void refreshAssets()}
                       onAssemble={() => void onAssembleCreatorCut()}
                     />
+                  ) : project?.mode === 'highlight' ? (
+                    <>
+                      <HighlightIngestPanel
+                        projectId={projectId}
+                        projectTitle={project.title}
+                        assets={assets}
+                        assetsLoading={assetsLoading}
+                        assetsError={assetsError}
+                        supabase={supabaseWhenSignedIn}
+                        userId={user?.id}
+                        assembling={creatorAssembling}
+                        assembleError={creatorAssembleError}
+                        targetFormat={creatorTargetFormat}
+                        onFormatChange={setCreatorTargetFormat}
+                        onUploaded={() => void refreshAssets()}
+                        onAssemble={(config) => void onAssembleHighlightReel(config)}
+                      />
+                      <div style={{ marginTop: 32 }}>
+                        {autoAssignError && (
+                          <div
+                            style={{
+                              marginBottom: 12,
+                              padding: '10px 14px',
+                              borderRadius: 8,
+                              background: 'rgba(239,68,68,0.1)',
+                              border: '1px solid rgba(239,68,68,0.3)',
+                              fontSize: 12,
+                              color: '#fca5a5',
+                            }}
+                          >
+                            {autoAssignError}
+                          </div>
+                        )}
+                        <HighlightTimeline
+                          project={project}
+                          assets={assets}
+                          segments={timelineSegments}
+                          isAutoAssigning={autoAssigning}
+                          onSegmentUpdate={(segmentId, updates) => {
+                            setTimelineSegments((prev) =>
+                              prev.map((s) => (s.id === segmentId ? { ...s, ...updates } : s))
+                            )
+                          }}
+                          onSegmentReorder={(segmentId, newPhase, newOrder) => {
+                            setTimelineSegments((prev) =>
+                              prev.map((s) =>
+                                s.id === segmentId
+                                  ? { ...s, phase: newPhase, orderInPhase: newOrder }
+                                  : s
+                              )
+                            )
+                          }}
+                          onAutoAssign={() => void handleAutoAssign()}
+                          onClipDrop={handleClipDrop}
+                        />
+                      </div>
+                    </>
                   ) : project?.mode === 'music_video' ? (
                     <MusicVideoIngestPanel
                       projectId={projectId}
@@ -8331,10 +8576,25 @@ export function ProjectWorkspacePage() {
                 </div>
               )}
 
+              {activeStep === 'audio' && (
+                <div className="step-content">
+                  <SoundDesignerPanel
+                    projectId={projectId}
+                    sequence={sequence}
+                    segments={dbSegments}
+                    audioDnaId={project?.audioDnaId}
+                    onAudioDnaChange={(id) => updateProject(projectId, { audioDnaId: id })}
+                    onSequenceChange={(seq) => {
+                      setTimeline(projectId, seq)
+                    }}
+                  />
+                </div>
+              )}
+
               {activeStep === 'export' && (
                 <div className="step-content">
                   <div style={stepHeader}>
-                    <h2 style={stepTitle}>6. Export</h2>
+                    <h2 style={stepTitle}>7. Export</h2>
                     <p style={stepDesc}>Render an MP4 or export a handoff package for your NLE.</p>
                   </div>
                   
@@ -8425,13 +8685,17 @@ export function ProjectWorkspacePage() {
                     </div>
                   ) : (
                     <div style={{ padding: 32, background: 'rgba(255,255,255,0.02)', borderRadius: 12, border: '1px solid rgba(255,255,255,0.06)' }}>
-                      <div style={{ fontSize: 14, color: '#a1a1aa', marginBottom: 24, textAlign: 'center' }}>
-                        Export a timeline package with original media for your editor.
+                      <div style={{ fontSize: 14, color: '#a1a1aa', marginBottom: 12, textAlign: 'center' }}>
+                        Storyteller edits. Your NLE finishes.
+                      </div>
+                      <div style={{ fontSize: 13, color: '#d4d4d8', marginBottom: 24, textAlign: 'center', lineHeight: 1.55, maxWidth: 640, marginInline: 'auto' }}>
+                        Export a rough-cut handoff package: primary edit, source media, timing, and markers.
+                        B-roll, titles, and sound-design layers stay in <code style={{ color: '#f4f4f5' }}>manifest.json</code> for manual finishing.
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'center', gap: 24, marginBottom: 32 }}>
                         {(
                           [
-                            ['final-cut-pro', 'Final Cut Pro'],
+                            ['final-cut-pro', 'Final Cut Pro (Rough Cut Beta)'],
                             ['premiere-pro', 'Adobe Premiere Pro'],
                             ['davinci-resolve', 'DaVinci Resolve'],
                             ['otio', 'OTIO (Resolve / adapter workflows only)']
@@ -8460,9 +8724,17 @@ export function ProjectWorkspacePage() {
                             , <code style={{ color: '#f4f4f5' }}>timeline.xml</code> (Premiere XMEML)
                           </>
                         ) : null}
-                        , <code style={{ color: '#f4f4f5' }}>manifest.json</code>, <code style={{ color: '#f4f4f5' }}>README.txt</code><br/>
-                        Sequence: {exportDims.width}×{exportDims.height}<br/>
+                        , <code style={{ color: '#f4f4f5' }}>manifest.json</code>, <code style={{ color: '#f4f4f5' }}>export-summary.txt</code>, <code style={{ color: '#f4f4f5' }}>README.txt</code><br/>
+                        Sequence: {exportDims.width}×{exportDims.height} · Timeline {nleExport.exportSummary.timelineDurationLabel}<br/>
                         Spine clips: <code style={{ color: '#f4f4f5' }}>{exportReadiness.exportableClipCount}</code> exportable of <code style={{ color: '#f4f4f5' }}>{exportReadiness.totalSpineClips}</code>
+                        {nleTarget === 'final-cut-pro' ? (
+                          <>
+                            <br/>
+                            <span style={{ color: '#a1a1aa' }}>
+                              Final Cut Rough Cut Export (Beta) — primary A-roll only. See export-summary.txt for included vs manifest-only items.
+                            </span>
+                          </>
+                        ) : null}
                         {nleTarget === 'otio' ? (
                           <>
                             <br/>

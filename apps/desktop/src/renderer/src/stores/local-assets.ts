@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Asset, JournalismClipRole, CreatorClipRole } from '@storyteller/shared'
+import type { Asset, JournalismClipRole, CreatorClipRole, HighlightClipRole } from '@storyteller/shared'
 
 const STORAGE_KEY = 'storyteller-local-assets-v1'
 
@@ -33,6 +33,8 @@ interface LocalAssetsState {
   updateAssetClipRole: (projectId: string, assetId: string, role: JournalismClipRole) => void
   /** Patch the creator_clip_role on a single asset without re-fetching everything. */
   updateAssetCreatorClipRole: (projectId: string, assetId: string, role: CreatorClipRole) => void
+  /** Patch the highlight_clip_role on a single asset without re-fetching everything. */
+  updateAssetHighlightClipRole: (projectId: string, assetId: string, role: HighlightClipRole) => void
   /** Patch thumbnail/proxy path after ffmpeg extract. */
   updateAssetProxyPath: (projectId: string, assetId: string, proxyPath: string) => void
 }
@@ -62,6 +64,13 @@ export const useLocalAssetsStore = create<LocalAssetsState>((set, get) => ({
   updateAssetCreatorClipRole: (projectId, assetId, role) => {
     const cur = get().byProject[projectId] ?? EMPTY_ASSET_LIST
     const updated = cur.map((a) => (a.id === assetId ? { ...a, creator_clip_role: role } : a))
+    const next = { ...get().byProject, [projectId]: updated }
+    persist(next)
+    set({ byProject: next })
+  },
+  updateAssetHighlightClipRole: (projectId, assetId, role) => {
+    const cur = get().byProject[projectId] ?? EMPTY_ASSET_LIST
+    const updated = cur.map((a) => (a.id === assetId ? { ...a, highlight_clip_role: role } : a))
     const next = { ...get().byProject, [projectId]: updated }
     persist(next)
     set({ byProject: next })

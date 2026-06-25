@@ -1,6 +1,8 @@
 import type { Asset } from '@storyteller/shared'
 import type { TimelineClip, TimelineSequence } from '@storyteller/timeline'
 import type { NleTarget, XmlManifestClipRef, XmlPackageManifest } from '../xml/types.js'
+import type { NleExportInput } from './shared-input.js'
+import { buildSfxNleTracks, sfxTrackGroupsToManifestTracks, sfxClipsToManifestClipRefs } from './audio-director-nle.js'
 
 function kindForAsset(t: string): 'video' | 'audio' | 'image' {
   if (t === 'audio') return 'audio'
@@ -66,9 +68,19 @@ export function buildXmlPackageManifest(params: {
   assets: Pick<Asset, 'id' | 'local_path' | 'storage_path' | 'asset_type'>[]
   textOverlayRefs: XmlPackageManifest['textOverlayRefs']
   targetNle: NleTarget
+  soundDesign?: NleExportInput['soundDesign']
 }): XmlPackageManifest {
-  const { sequence, assets, textOverlayRefs, targetNle } = params
+  const { sequence, assets, textOverlayRefs, targetNle, soundDesign } = params
   const clips = collectClipRefs(sequence)
+
+  const sfxGroups = soundDesign
+    ? buildSfxNleTracks({
+        slots: soundDesign.slots,
+        resolutions: soundDesign.resolutions,
+        audioDna: soundDesign.audioDna,
+        assetNamesById: soundDesign.assetNamesById,
+      })
+    : []
 
   return {
     version: 1,
@@ -86,9 +98,10 @@ export function buildXmlPackageManifest(params: {
     tracks: [
       ...sequence.videoTracks.map((t) => ({ id: t.id, name: t.name, kind: 'video' as const, clipCount: t.clips.length })),
       ...sequence.audioTracks.map((t) => ({ id: t.id, name: t.name, kind: 'audio' as const, clipCount: t.clips.length })),
-      ...sequence.textTracks.map((t) => ({ id: t.id, name: t.name, kind: 'text' as const, clipCount: t.clips.length }))
+      ...sequence.textTracks.map((t) => ({ id: t.id, name: t.name, kind: 'text' as const, clipCount: t.clips.length })),
+      ...sfxTrackGroupsToManifestTracks(sfxGroups),
     ],
-    clips,
+    clips: [...clips, ...sfxClipsToManifestClipRefs(sfxGroups)],
     textOverlayRefs,
     markers: sequence.markers.map((m) => ({
       id: m.id,

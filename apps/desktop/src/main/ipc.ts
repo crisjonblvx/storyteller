@@ -106,6 +106,7 @@ export function registerIpc(): void {
   ipcMain.removeHandler('analysis:groundedReview')
   ipcMain.removeHandler('media:analyzeBeat')
   ipcMain.removeHandler('media:extractThumbnail')
+  ipcMain.removeHandler('highlight:autoAssignClips')
 
   /**
    * Lightweight feature-flag check the renderer can use to render an honest
@@ -402,6 +403,11 @@ export function registerIpc(): void {
         segmentsByAsset?: Record<string, unknown>
         style?: Record<string, unknown>
       }
+      soundDesign?: {
+        slots?: unknown[]
+        resolutions?: unknown[]
+        audioDna?: unknown
+      }
     }
     if (typeof p.outputPath !== 'string' || !p.outputPath) {
       return { ok: false as const, error: 'Missing output path' }
@@ -421,6 +427,13 @@ export function registerIpc(): void {
             burn: true,
             segmentsByAsset: (p.captions.segmentsByAsset as Record<string, never> | undefined) ?? {},
             style: p.captions.style as never
+          }
+        : undefined,
+      soundDesign: p.soundDesign
+        ? {
+            slots: (p.soundDesign.slots ?? []) as import('@storyteller/timeline').SoundDesignSlot[],
+            resolutions: (p.soundDesign.resolutions ?? []) as import('@storyteller/audio').SoundAssetResolution[],
+            audioDna: p.soundDesign.audioDna as import('@storyteller/analysis').AudioDnaDefinition
           }
         : undefined,
       onProgress: (msg) => {
@@ -1133,5 +1146,107 @@ export function registerIpc(): void {
       accessToken: typeof p.accessToken === 'string' ? p.accessToken : undefined,
       previousIdeas: Array.isArray(p.previousIdeas) ? (p.previousIdeas as string[]) : undefined
     })
+  })
+
+  /**
+   * Auto-assign highlight clips to game phases via OpenAI.
+   * Takes a list of clip descriptors and returns phase/role/score assignments.
+   */
+  ipcMain.handle('highlight:autoAssignClips', async (_event, payload: unknown) => {
+    const apiKey = process.env.OPENAI_API_KEY?.trim()
+    if (!apiKey) {
+      return { ok: false as const, error: 'Storyteller AI is not configured on this build.' }
+    }
+    if (!payload || typeof payload !== 'object') {
+      return { ok: false as const, error: 'Invalid payload' }
+    }
+    const p = payload as {
+      clips?: Array<{
+        id: string
+        role: string
+        file_name: string
+        duration_seconds: number | null
+      }>
+      sport?: string
+    }
+    if (!Array.isArray(p.clips) || p.clips.length === 0) {
+      return { ok: false as const, error: 'No clips provided for auto-assign.' }
+    }
+    const sport = typeof p.sport === 'string' && p.sport.trim() ? p.sport.trim() : 'Basketball'
+    const model = process.env.OPENAI_MODEL || 'gpt-5.4-mini'
+    const clipLines = p.clips
+      .map(
+        (c) =>
+          `- id: ${c.id}, role: ${c.role}, filename: ${c.file_name}, duration: ${c.duration_seconds ?? 'unknown'}s`
+      )
+      .join('\n')
+
+    const autoAssignPrompt = `You are a sports video editor AI. Given the following list of footage clips for a ${sport} highlight reel, assign each clip a game_phase, role, highlight_score, confidence, and order_in_phase.
+
+Clips:
+${clipLines}
+
+Game phases: pregame, first_half, halftime, second_half, final_moments, postgame
+
+Rules:
+- hype clips -> pregame or final_moments
+- play clips -> distribute across first_half, second_half, final_moments (weight toward final_moments)
+- reaction/crowd clips -> same half as the plays they likely accompany
+- commentary clips -> first_half (intro) or postgame
+- recap clips -> postgame
+- highlight_score: 0-100 based on role importance (play=85-95, reaction=70-85, crowd=60-75, commentary=50-65, hype=75-90, recap=60-70)
+- confidence: 0-1 representing your certainty about the phase assignment
+- order_in_phase: 1-based sort order within that phase, no duplicates per phase
+
+Respond ONLY with a valid JSON array - no markdown, no explanation:
+[{"assetId":"...","phase":"...","role":"...","highlightScore":0,"confidence":0.9,"orderInPhase":1}]`
+
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model,
+          messages: [{ role: 'user', content: autoAssignPrompt }],
+          temperature: 0.3,
+          max_tokens: 2048
+        })
+      })
+      if (!response.ok) {
+        const errText = await response.text().catch(() => '')
+        return {
+          ok: false as const,
+          error: sanitizeErrorMessage(`AI request failed (${response.status}): ${errText}`)
+        }
+      }
+      const json = (await response.json()) as {
+        choices?: Array<{ message?: { content?: string } }>
+      }
+      const raw = json.choices?.[0]?.message?.content ?? ''
+      const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim()
+      let assignments: Array<{
+        assetId: string
+        phase: string
+        role: string
+        highlightScore: number
+        confidence: number
+        orderInPhase: number
+      }>
+      try {
+        assignments = JSON.parse(cleaned) as typeof assignments
+      } catch {
+        return { ok: false as const, error: 'AI returned malformed JSON. Try again.' }
+      }
+      if (!Array.isArray(assignments)) {
+        return { ok: false as const, error: 'AI response was not a JSON array. Try again.' }
+      }
+      return { ok: true as const, assignments }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e)
+      return { ok: false as const, error: sanitizeErrorMessage(msg) }
+    }
   })
 }

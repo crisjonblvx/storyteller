@@ -8,6 +8,7 @@ import storytellerLogo from '@renderer/assets/storyteller-logo.png'
 
 function gradientForProject(p: LocalProject): string {
   switch (p.intent) {
+    case 'sports_highlight': return 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 50%, #082f49 100%)'
     case 'brand_intro': return 'linear-gradient(135deg, #3730a3 0%, #1e1b4b 100%)'
     case 'music_video': return 'linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%)'
     case 'commercial': return 'linear-gradient(135deg, #b45309 0%, #78350f 100%)'
@@ -19,6 +20,7 @@ function gradientForProject(p: LocalProject): string {
     case 'brand_story': return 'linear-gradient(135deg, #0369a1 0%, #0c4a6e 100%)'
   }
   switch (p.mode) {
+    case 'highlight': return 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 50%, #082f49 100%)'
     case 'journalism': return 'linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%)'
     case 'creator': return 'linear-gradient(135deg, #d97706 0%, #92400e 100%)'
     case 'music_video': return 'linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%)'
@@ -30,6 +32,7 @@ function gradientForProject(p: LocalProject): string {
 
 function iconForProject(p: LocalProject): string {
   switch (p.intent) {
+    case 'sports_highlight': return '⚡'
     case 'brand_intro': return '🎬'
     case 'music_video': return '🎵'
     case 'commercial': return '📢'
@@ -41,6 +44,7 @@ function iconForProject(p: LocalProject): string {
     case 'brand_story': return '🏢'
   }
   switch (p.mode) {
+    case 'highlight': return '⚡'
     case 'journalism': return '📰'
     case 'creator': return '⚡'
     case 'music_video': return '🎵'
@@ -52,6 +56,7 @@ function iconForProject(p: LocalProject): string {
 
 function labelForProject(p: LocalProject): string {
   switch (p.intent) {
+    case 'sports_highlight': return 'Sports Highlight Reel'
     case 'brand_intro': return 'Brand Intro / Show Open'
     case 'music_video': return 'Music Video'
     case 'commercial': return 'Commercial or Ad'
@@ -59,7 +64,7 @@ function labelForProject(p: LocalProject): string {
     case 'news_package': return 'News Package'
     case 'documentary': return 'Documentary'
     case 'social_reel': return 'Social Reel / Creator'
-    case 'event_highlight': return 'Event Highlight'
+    case 'event_highlight': return 'Event Recap'
     case 'brand_story': return 'Brand Story / Corporate'
   }
   return p.mode

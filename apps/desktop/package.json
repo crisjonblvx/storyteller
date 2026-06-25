@@ -27,6 +27,7 @@
     "@electron/notarize": "^2.5.0",
     "@storyteller/ai-gateway": "*",
     "@storyteller/analysis": "*",
+    "@storyteller/audio": "*",
     "@storyteller/exporters": "*",
     "@storyteller/media": "*",
     "@storyteller/shared": "*",

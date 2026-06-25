@@ -1,4 +1,5 @@
 import type { StoryMode, ProjectFormat } from '@storyteller/shared'
+import type { SoundDesignSlot, SoundMotivatedTimingNote } from './audio-director.js'
 
 /** Roles for clips and generated items — drives export + UI */
 export type TimelineItemRole =
@@ -18,6 +19,10 @@ export type TimelineItemRole =
    * to push subsequent clips forward and to render as black/silent in export.
    */
   | 'pause-gap'
+  | 'sfx-ambient'
+  | 'sfx-movement'
+  | 'sfx-impact'
+  | 'sfx-transition'
 
 export interface TimelineMarker {
   id: string
@@ -224,6 +229,10 @@ export interface TimelineSequence {
    * NLE exporter writes them as `textOverlayRefs` on the manifest.
    */
   overlayEvents?: OverlayEvent[]
+  /** Sound design slots (SFX suggestions placed on the timeline). Optional; omit in older saves. */
+  soundDesignSlots?: SoundDesignSlot[]
+  /** Timing notes where sound motivates an edit trim or extension. */
+  soundTimingNotes?: SoundMotivatedTimingNote[]
   exportMetadata?: {
     aspectRatio?: '16:9' | '9:16' | '1:1'
     burnInCaptions?: boolean

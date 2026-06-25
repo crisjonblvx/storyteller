@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { PromptPackId } from '@storyteller/analysis'
+import type { PromptPackId, AudioDnaId } from '@storyteller/analysis'
 import type { SilencePreset, StoryMode, StoryIntent, PrimaryGoal } from '@storyteller/shared'
 import { SILENCE_PRESETS, defaultSilencePresetForMode, STORY_MODES, intentToMode } from '@storyteller/shared'
 import { defaultSubjectProfile, normalizeSubjectProfile, type SubjectProfile } from '@storyteller/shared'
@@ -8,6 +8,8 @@ import {
   clampBrollShotDurationSeconds,
   DEFAULT_BROLL_SHOT_DURATION_SECONDS
 } from '@storyteller/shared'
+import type { HighlightSettings, TimelineSegment } from '@storyteller/shared'
+import { supabase } from '@renderer/lib/supabase'
 
 export type PromptPackSelection = PromptPackId | 'auto'
 
@@ -21,6 +23,24 @@ const PROMPT_PACK_IDS: PromptPackId[] = [
   'motivational',
   'music_video'
 ]
+
+const AUDIO_DNA_IDS: AudioDnaId[] = [
+  'netflix_documentary',
+  'bloomberg_finance',
+  'espn_sports',
+  'apple_keynote',
+  'crime_documentary',
+  'motivational',
+  'youtube_creator',
+  'podcast'
+]
+
+function normalizeAudioDnaId(raw: unknown): AudioDnaId | undefined {
+  if (typeof raw === 'string' && (AUDIO_DNA_IDS as readonly string[]).includes(raw)) {
+    return raw as AudioDnaId
+  }
+  return undefined
+}
 
 function normalizePromptPackId(raw: unknown): PromptPackSelection {
   if (raw === 'auto') return 'auto'
@@ -71,6 +91,15 @@ function normalizeLocalProject(raw: unknown): LocalProject | null {
       : undefined,
     musicLocalPath: typeof r.musicLocalPath === 'string' ? r.musicLocalPath : undefined,
     brollTransitionsEnabled: typeof r.brollTransitionsEnabled === 'boolean' ? r.brollTransitionsEnabled : undefined,
+    highlightMusicTrackName: typeof r.highlightMusicTrackName === 'string' ? r.highlightMusicTrackName : undefined,
+    highlightBeatSyncEnabled: typeof r.highlightBeatSyncEnabled === 'boolean' ? r.highlightBeatSyncEnabled : undefined,
+    highlightSettings: r.highlightSettings && typeof r.highlightSettings === 'object'
+      ? (r.highlightSettings as HighlightSettings)
+      : undefined,
+    timelineSegments: Array.isArray(r.timelineSegments)
+      ? (r.timelineSegments as TimelineSegment[])
+      : undefined,
+    audioDnaId: normalizeAudioDnaId(r.audioDnaId),
   }
 }
 
@@ -134,6 +163,27 @@ export interface LocalProject {
    * Defaults to true (undefined = true) for backward compatibility.
    */
   brollTransitionsEnabled?: boolean
+  // --- Highlight Reel specific ---
+  /** Filename of the music track uploaded for beat-sync cutting in highlight mode. */
+  highlightMusicTrackName?: string
+  /**
+   * When true, the highlight reel assembly aligns cuts to beat markers in the music track.
+   * Defaults to true whenever a track name is set.
+   */
+  highlightBeatSyncEnabled?: boolean
+  /**
+   * Structured settings for the sports highlight workflow.
+   * Replaces the free-form `aiDirection` string for highlight projects;
+   * `aiDirection` is now derived from this object when present.
+   */
+  highlightSettings?: HighlightSettings
+  /**
+   * Clip-to-phase assignments for the highlight timeline.
+   * Each segment maps an asset to a game phase, role, and highlight score.
+   */
+  timelineSegments?: TimelineSegment[]
+  /** Sound design philosophy applied to this project's audio layer. */
+  audioDnaId?: AudioDnaId
 }
 
 interface WorkflowState {
@@ -142,6 +192,8 @@ interface WorkflowState {
   updateProject: (id: string, patch: Partial<LocalProject>) => void
   deleteProject: (id: string) => void
   touchProject: (id: string) => void
+  /** Pull `highlight_settings` from Supabase and merge into the local project. */
+  loadHighlightSettingsFromCloud: (id: string) => Promise<void>
 }
 
 export const useProjectWorkflow = create<WorkflowState>((set, get) => ({
@@ -174,6 +226,16 @@ export const useProjectWorkflow = create<WorkflowState>((set, get) => ({
     )
     persistProjects(projects)
     set({ projects })
+
+    // Fire-and-forget: sync highlight_settings to Supabase whenever it changes.
+    if ('highlightSettings' in patch && supabase) {
+      const updated = projects.find((p) => p.id === id)
+      const payload = updated?.highlightSettings ?? {}
+      void supabase
+        .from('projects')
+        .update({ highlight_settings: payload })
+        .eq('id', id)
+    }
   },
   deleteProject: (id) => {
     const projects = get().projects.filter((p) => p.id !== id)
@@ -186,5 +248,20 @@ export const useProjectWorkflow = create<WorkflowState>((set, get) => ({
     )
     persistProjects(projects)
     set({ projects })
-  }
+  },
+  loadHighlightSettingsFromCloud: async (id) => {
+    if (!supabase) return
+    const { data } = await supabase
+      .from('projects')
+      .select('highlight_settings')
+      .eq('id', id)
+      .maybeSingle()
+    if (!data?.highlight_settings || typeof data.highlight_settings !== 'object') return
+    const hs = data.highlight_settings as HighlightSettings
+    const projects = get().projects.map((p) =>
+      p.id === id ? { ...p, highlightSettings: hs } : p
+    )
+    persistProjects(projects)
+    set({ projects })
+  },
 }))

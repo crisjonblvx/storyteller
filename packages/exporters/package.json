@@ -8,8 +8,16 @@
   },
   "types": "./src/index.ts",
   "dependencies": {
+    "@storyteller/analysis": "*",
+    "@storyteller/audio": "*",
     "@storyteller/media": "*",
     "@storyteller/shared": "*",
     "@storyteller/timeline": "*"
+  },
+  "devDependencies": {
+    "vitest": "^2.1.8"
+  },
+  "scripts": {
+    "test": "vitest run"
   }
 }

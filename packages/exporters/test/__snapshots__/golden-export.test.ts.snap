@@ -1,0 +1,1557 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`export summary — editorial contract messaging > reports included vs excluded layers for interview with b-roll > interview-layers export-summary 1`] = `
+"Storyteller Export Summary
+
+Project: Interview Layers
+Target: Final Cut Pro — Rough Cut Export (Beta)
+Timeline: 0:33
+Generated: 2026-06-25T12:00:00.000Z
+
+Exported:
+  ✓ 3 A-roll clips
+  ✓ 0 markers
+  ✓ 1 source file
+
+Not included in interchange timeline:
+  • 1 B-roll clip
+  • 1 title overlay
+  • 1 sound effect placement
+
+Includes primary edit (A-roll rough cut), media, and timeline metadata. B-roll, graphics, and advanced layering are provided in manifest.json for manual finishing while Final Cut XML compatibility continues to improve.
+
+Editorial contract:
+  • Clip order preserved
+  • Trim in/out preserved
+  • Timeline duration preserved (within one frame)
+  • Source media packaged when available locally
+
+Manifest clips: 0 total references · schema v1
+See manifest.json for complete timeline metadata."
+`;
+
+exports[`golden NLE export — Final Cut rough cut > interview-cloud-assets — fcpxml + manifest snapshot > interview-cloud-assets fcpxml 1`] = `
+"<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE fcpxml>
+<fcpxml version="1.9">
+  <resources>
+    <format id="r1" name="FFVideoFormat1080p30" frameDuration="1/30s" width="1920" height="1080" />
+  </resources>
+  <library>
+    <event name="Storyteller Export">
+      <project name="seq-proj-interview">
+        <sequence duration="990/30s" format="r1" tcStart="0s" tcFormat="NDF">
+          <spine>
+          <gap offset="0/30s" duration="990/30s" start="0s"/>
+          </spine>
+        </sequence>
+      </project>
+    </event>
+  </library>
+</fcpxml>"
+`;
+
+exports[`golden NLE export — Final Cut rough cut > interview-cloud-assets — fcpxml + manifest snapshot > interview-cloud-assets manifest 1`] = `
+{
+  "assets": [
+    {
+      "id": "asset-primary-001",
+      "kind": "video",
+      "localPath": "/Volumes/Media/interview-a-roll.mov",
+      "storagePath": "projects/demo/interview-a-roll.mov",
+    },
+    {
+      "id": "asset-secondary-002",
+      "kind": "video",
+      "localPath": "/Volumes/Media/broll-cutaway.mov",
+      "storagePath": "projects/demo/broll-cutaway.mov",
+    },
+  ],
+  "clips": [
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-1",
+      "introRole": undefined,
+      "role": "a-roll",
+      "soundbiteId": "sb-1",
+      "sourceInSeconds": 12,
+      "sourceOutSeconds": 23,
+      "timelineInSeconds": 0,
+      "timelineOutSeconds": 11,
+      "trackId": "v1",
+      "trackKind": "video",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-2",
+      "introRole": undefined,
+      "role": "a-roll",
+      "soundbiteId": "sb-2",
+      "sourceInSeconds": 45,
+      "sourceOutSeconds": 56,
+      "timelineInSeconds": 11,
+      "timelineOutSeconds": 22,
+      "trackId": "v1",
+      "trackKind": "video",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-3",
+      "introRole": undefined,
+      "role": "a-roll",
+      "soundbiteId": "sb-3",
+      "sourceInSeconds": 120,
+      "sourceOutSeconds": 131,
+      "timelineInSeconds": 22,
+      "timelineOutSeconds": 33,
+      "trackId": "v1",
+      "trackKind": "video",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-1-audio",
+      "introRole": undefined,
+      "role": "nat-audio",
+      "soundbiteId": "sb-1",
+      "sourceInSeconds": 12,
+      "sourceOutSeconds": 23,
+      "timelineInSeconds": 0,
+      "timelineOutSeconds": 11,
+      "trackId": "a1",
+      "trackKind": "audio",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-2-audio",
+      "introRole": undefined,
+      "role": "nat-audio",
+      "soundbiteId": "sb-2",
+      "sourceInSeconds": 45,
+      "sourceOutSeconds": 56,
+      "timelineInSeconds": 11,
+      "timelineOutSeconds": 22,
+      "trackId": "a1",
+      "trackKind": "audio",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-3-audio",
+      "introRole": undefined,
+      "role": "nat-audio",
+      "soundbiteId": "sb-3",
+      "sourceInSeconds": 120,
+      "sourceOutSeconds": 131,
+      "timelineInSeconds": 22,
+      "timelineOutSeconds": 33,
+      "trackId": "a1",
+      "trackKind": "audio",
+      "transcriptSegmentIds": undefined,
+    },
+  ],
+  "generatedAt": "2026-06-25T12:00:00.000Z",
+  "manifestSchemaVersion": 1,
+  "markers": [],
+  "projectId": "proj-interview",
+  "sequenceId": "seq-proj-interview",
+  "targetNle": "final-cut-pro",
+  "textOverlayRefs": [],
+  "tracks": [
+    {
+      "clipCount": 3,
+      "id": "v1",
+      "kind": "video",
+      "name": "Video 1",
+    },
+    {
+      "clipCount": 3,
+      "id": "a1",
+      "kind": "audio",
+      "name": "Audio 1",
+    },
+    {
+      "clipCount": 0,
+      "id": "t1",
+      "kind": "text",
+      "name": "Titles",
+    },
+  ],
+  "version": 1,
+}
+`;
+
+exports[`golden NLE export — Final Cut rough cut > interview-cuts — fcpxml + manifest snapshot > interview-cuts fcpxml 1`] = `
+"<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE fcpxml>
+<fcpxml version="1.9">
+  <resources>
+    <format id="r1" name="FFVideoFormat1080p30" frameDuration="1/30s" width="1920" height="1080" />
+    <asset id="r2" uid="asset-primary-001" name="interview-a-roll.mov" start="0s" duration="108000/30s" hasVideo="1" hasAudio="1" videoSources="1" audioSources="1" audioChannels="2" audioRate="48000" format="r1">
+      <media-rep kind="original-media" src="file:///Volumes/Media/interview-a-roll.mov" />
+    </asset>
+  </resources>
+  <library>
+    <event name="B-Roll">
+      <clip name="interview-a-roll.mov">
+        <video>
+          <asset-clip ref="r2" offset="0s" name="interview-a-roll.mov" duration="108000/30s" start="0s"/>
+        </video>
+      </clip>
+    </event>
+    <event name="Storyteller Export">
+      <project name="seq-proj-interview">
+        <sequence duration="990/30s" format="r1" tcStart="0s" tcFormat="NDF">
+          <spine>
+          <asset-clip name="interview-a-roll.mov" ref="r2" offset="0/30s" duration="330/30s" start="360/30s" enabled="1" tcFormat="NDF"/>
+          <asset-clip name="interview-a-roll.mov" ref="r2" offset="330/30s" duration="330/30s" start="1350/30s" enabled="1" tcFormat="NDF"/>
+          <asset-clip name="interview-a-roll.mov" ref="r2" offset="660/30s" duration="330/30s" start="3600/30s" enabled="1" tcFormat="NDF"/>
+          </spine>
+        </sequence>
+      </project>
+    </event>
+  </library>
+</fcpxml>"
+`;
+
+exports[`golden NLE export — Final Cut rough cut > interview-cuts — fcpxml + manifest snapshot > interview-cuts manifest 1`] = `
+{
+  "assets": [
+    {
+      "id": "asset-primary-001",
+      "kind": "video",
+      "localPath": "/Volumes/Media/interview-a-roll.mov",
+      "storagePath": "projects/demo/interview-a-roll.mov",
+    },
+    {
+      "id": "asset-secondary-002",
+      "kind": "video",
+      "localPath": "/Volumes/Media/broll-cutaway.mov",
+      "storagePath": "projects/demo/broll-cutaway.mov",
+    },
+  ],
+  "clips": [
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-1",
+      "introRole": undefined,
+      "role": "a-roll",
+      "soundbiteId": "sb-1",
+      "sourceInSeconds": 12,
+      "sourceOutSeconds": 23,
+      "timelineInSeconds": 0,
+      "timelineOutSeconds": 11,
+      "trackId": "v1",
+      "trackKind": "video",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-2",
+      "introRole": undefined,
+      "role": "a-roll",
+      "soundbiteId": "sb-2",
+      "sourceInSeconds": 45,
+      "sourceOutSeconds": 56,
+      "timelineInSeconds": 11,
+      "timelineOutSeconds": 22,
+      "trackId": "v1",
+      "trackKind": "video",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-3",
+      "introRole": undefined,
+      "role": "a-roll",
+      "soundbiteId": "sb-3",
+      "sourceInSeconds": 120,
+      "sourceOutSeconds": 131,
+      "timelineInSeconds": 22,
+      "timelineOutSeconds": 33,
+      "trackId": "v1",
+      "trackKind": "video",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-1-audio",
+      "introRole": undefined,
+      "role": "nat-audio",
+      "soundbiteId": "sb-1",
+      "sourceInSeconds": 12,
+      "sourceOutSeconds": 23,
+      "timelineInSeconds": 0,
+      "timelineOutSeconds": 11,
+      "trackId": "a1",
+      "trackKind": "audio",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-2-audio",
+      "introRole": undefined,
+      "role": "nat-audio",
+      "soundbiteId": "sb-2",
+      "sourceInSeconds": 45,
+      "sourceOutSeconds": 56,
+      "timelineInSeconds": 11,
+      "timelineOutSeconds": 22,
+      "trackId": "a1",
+      "trackKind": "audio",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-3-audio",
+      "introRole": undefined,
+      "role": "nat-audio",
+      "soundbiteId": "sb-3",
+      "sourceInSeconds": 120,
+      "sourceOutSeconds": 131,
+      "timelineInSeconds": 22,
+      "timelineOutSeconds": 33,
+      "trackId": "a1",
+      "trackKind": "audio",
+      "transcriptSegmentIds": undefined,
+    },
+  ],
+  "generatedAt": "2026-06-25T12:00:00.000Z",
+  "manifestSchemaVersion": 1,
+  "markers": [],
+  "projectId": "proj-interview",
+  "sequenceId": "seq-proj-interview",
+  "targetNle": "final-cut-pro",
+  "textOverlayRefs": [],
+  "tracks": [
+    {
+      "clipCount": 3,
+      "id": "v1",
+      "kind": "video",
+      "name": "Video 1",
+    },
+    {
+      "clipCount": 3,
+      "id": "a1",
+      "kind": "audio",
+      "name": "Audio 1",
+    },
+    {
+      "clipCount": 0,
+      "id": "t1",
+      "kind": "text",
+      "name": "Titles",
+    },
+  ],
+  "version": 1,
+}
+`;
+
+exports[`golden NLE export — Final Cut rough cut > interview-markers — fcpxml + manifest snapshot > interview-markers fcpxml 1`] = `
+"<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE fcpxml>
+<fcpxml version="1.9">
+  <resources>
+    <format id="r1" name="FFVideoFormat1080p30" frameDuration="1/30s" width="1920" height="1080" />
+    <asset id="r2" uid="asset-primary-001" name="interview-a-roll.mov" start="0s" duration="108000/30s" hasVideo="1" hasAudio="1" videoSources="1" audioSources="1" audioChannels="2" audioRate="48000" format="r1">
+      <media-rep kind="original-media" src="file:///Volumes/Media/interview-a-roll.mov" />
+    </asset>
+  </resources>
+  <library>
+    <event name="B-Roll">
+      <clip name="interview-a-roll.mov">
+        <video>
+          <asset-clip ref="r2" offset="0s" name="interview-a-roll.mov" duration="108000/30s" start="0s"/>
+        </video>
+      </clip>
+    </event>
+    <event name="Storyteller Export">
+      <project name="seq-proj-interview">
+        <sequence duration="990/30s" format="r1" tcStart="0s" tcFormat="NDF">
+          <spine>
+          <asset-clip name="interview-a-roll.mov" ref="r2" offset="0/30s" duration="330/30s" start="360/30s" enabled="1" tcFormat="NDF">
+            <marker start="390/30s" duration="1/30s" value="Cold open"/>
+          </asset-clip>
+          <asset-clip name="interview-a-roll.mov" ref="r2" offset="330/30s" duration="330/30s" start="1350/30s" enabled="1" tcFormat="NDF">
+            <marker start="1620/30s" duration="1/30s" value="Payoff"/>
+          </asset-clip>
+          <asset-clip name="interview-a-roll.mov" ref="r2" offset="660/30s" duration="330/30s" start="3600/30s" enabled="1" tcFormat="NDF"/>
+          </spine>
+        </sequence>
+      </project>
+    </event>
+  </library>
+</fcpxml>"
+`;
+
+exports[`golden NLE export — Final Cut rough cut > interview-markers — fcpxml + manifest snapshot > interview-markers manifest 1`] = `
+{
+  "assets": [
+    {
+      "id": "asset-primary-001",
+      "kind": "video",
+      "localPath": "/Volumes/Media/interview-a-roll.mov",
+      "storagePath": "projects/demo/interview-a-roll.mov",
+    },
+    {
+      "id": "asset-secondary-002",
+      "kind": "video",
+      "localPath": "/Volumes/Media/broll-cutaway.mov",
+      "storagePath": "projects/demo/broll-cutaway.mov",
+    },
+  ],
+  "clips": [
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-1",
+      "introRole": undefined,
+      "role": "a-roll",
+      "soundbiteId": "sb-1",
+      "sourceInSeconds": 12,
+      "sourceOutSeconds": 23,
+      "timelineInSeconds": 0,
+      "timelineOutSeconds": 11,
+      "trackId": "v1",
+      "trackKind": "video",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-2",
+      "introRole": undefined,
+      "role": "a-roll",
+      "soundbiteId": "sb-2",
+      "sourceInSeconds": 45,
+      "sourceOutSeconds": 56,
+      "timelineInSeconds": 11,
+      "timelineOutSeconds": 22,
+      "trackId": "v1",
+      "trackKind": "video",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-3",
+      "introRole": undefined,
+      "role": "a-roll",
+      "soundbiteId": "sb-3",
+      "sourceInSeconds": 120,
+      "sourceOutSeconds": 131,
+      "timelineInSeconds": 22,
+      "timelineOutSeconds": 33,
+      "trackId": "v1",
+      "trackKind": "video",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-1-audio",
+      "introRole": undefined,
+      "role": "nat-audio",
+      "soundbiteId": "sb-1",
+      "sourceInSeconds": 12,
+      "sourceOutSeconds": 23,
+      "timelineInSeconds": 0,
+      "timelineOutSeconds": 11,
+      "trackId": "a1",
+      "trackKind": "audio",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-2-audio",
+      "introRole": undefined,
+      "role": "nat-audio",
+      "soundbiteId": "sb-2",
+      "sourceInSeconds": 45,
+      "sourceOutSeconds": 56,
+      "timelineInSeconds": 11,
+      "timelineOutSeconds": 22,
+      "trackId": "a1",
+      "trackKind": "audio",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-3-audio",
+      "introRole": undefined,
+      "role": "nat-audio",
+      "soundbiteId": "sb-3",
+      "sourceInSeconds": 120,
+      "sourceOutSeconds": 131,
+      "timelineInSeconds": 22,
+      "timelineOutSeconds": 33,
+      "trackId": "a1",
+      "trackKind": "audio",
+      "transcriptSegmentIds": undefined,
+    },
+  ],
+  "generatedAt": "2026-06-25T12:00:00.000Z",
+  "manifestSchemaVersion": 1,
+  "markers": [
+    {
+      "color": "blue",
+      "id": "m1",
+      "label": "Cold open",
+      "timeSeconds": 1,
+    },
+    {
+      "color": "green",
+      "id": "m2",
+      "label": "Payoff",
+      "timeSeconds": 20,
+    },
+  ],
+  "projectId": "proj-interview",
+  "sequenceId": "seq-proj-interview",
+  "targetNle": "final-cut-pro",
+  "textOverlayRefs": [],
+  "tracks": [
+    {
+      "clipCount": 3,
+      "id": "v1",
+      "kind": "video",
+      "name": "Video 1",
+    },
+    {
+      "clipCount": 3,
+      "id": "a1",
+      "kind": "audio",
+      "name": "Audio 1",
+    },
+    {
+      "clipCount": 0,
+      "id": "t1",
+      "kind": "text",
+      "name": "Titles",
+    },
+  ],
+  "version": 1,
+}
+`;
+
+exports[`golden NLE export — Final Cut rough cut > interview-missing-media — fcpxml + manifest snapshot > interview-missing-media fcpxml 1`] = `
+"<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE fcpxml>
+<fcpxml version="1.9">
+  <resources>
+    <format id="r1" name="FFVideoFormat1080p30" frameDuration="1/30s" width="1920" height="1080" />
+  </resources>
+  <library>
+    <event name="Storyteller Export">
+      <project name="seq-proj-interview">
+        <sequence duration="990/30s" format="r1" tcStart="0s" tcFormat="NDF">
+          <spine>
+          <gap offset="0/30s" duration="990/30s" start="0s"/>
+          </spine>
+        </sequence>
+      </project>
+    </event>
+  </library>
+</fcpxml>"
+`;
+
+exports[`golden NLE export — Final Cut rough cut > interview-missing-media — fcpxml + manifest snapshot > interview-missing-media manifest 1`] = `
+{
+  "assets": [
+    {
+      "id": "asset-primary-001",
+      "kind": "video",
+      "localPath": "/Volumes/Media/interview-a-roll.mov",
+      "storagePath": "projects/demo/interview-a-roll.mov",
+    },
+    {
+      "id": "asset-secondary-002",
+      "kind": "video",
+      "localPath": "/Volumes/Media/broll-cutaway.mov",
+      "storagePath": "projects/demo/broll-cutaway.mov",
+    },
+  ],
+  "clips": [
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-1",
+      "introRole": undefined,
+      "role": "a-roll",
+      "soundbiteId": "sb-1",
+      "sourceInSeconds": 12,
+      "sourceOutSeconds": 23,
+      "timelineInSeconds": 0,
+      "timelineOutSeconds": 11,
+      "trackId": "v1",
+      "trackKind": "video",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-2",
+      "introRole": undefined,
+      "role": "a-roll",
+      "soundbiteId": "sb-2",
+      "sourceInSeconds": 45,
+      "sourceOutSeconds": 56,
+      "timelineInSeconds": 11,
+      "timelineOutSeconds": 22,
+      "trackId": "v1",
+      "trackKind": "video",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-3",
+      "introRole": undefined,
+      "role": "a-roll",
+      "soundbiteId": "sb-3",
+      "sourceInSeconds": 120,
+      "sourceOutSeconds": 131,
+      "timelineInSeconds": 22,
+      "timelineOutSeconds": 33,
+      "trackId": "v1",
+      "trackKind": "video",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-1-audio",
+      "introRole": undefined,
+      "role": "nat-audio",
+      "soundbiteId": "sb-1",
+      "sourceInSeconds": 12,
+      "sourceOutSeconds": 23,
+      "timelineInSeconds": 0,
+      "timelineOutSeconds": 11,
+      "trackId": "a1",
+      "trackKind": "audio",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-2-audio",
+      "introRole": undefined,
+      "role": "nat-audio",
+      "soundbiteId": "sb-2",
+      "sourceInSeconds": 45,
+      "sourceOutSeconds": 56,
+      "timelineInSeconds": 11,
+      "timelineOutSeconds": 22,
+      "trackId": "a1",
+      "trackKind": "audio",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-3-audio",
+      "introRole": undefined,
+      "role": "nat-audio",
+      "soundbiteId": "sb-3",
+      "sourceInSeconds": 120,
+      "sourceOutSeconds": 131,
+      "timelineInSeconds": 22,
+      "timelineOutSeconds": 33,
+      "trackId": "a1",
+      "trackKind": "audio",
+      "transcriptSegmentIds": undefined,
+    },
+  ],
+  "generatedAt": "2026-06-25T12:00:00.000Z",
+  "manifestSchemaVersion": 1,
+  "markers": [],
+  "projectId": "proj-interview",
+  "sequenceId": "seq-proj-interview",
+  "targetNle": "final-cut-pro",
+  "textOverlayRefs": [],
+  "tracks": [
+    {
+      "clipCount": 3,
+      "id": "v1",
+      "kind": "video",
+      "name": "Video 1",
+    },
+    {
+      "clipCount": 3,
+      "id": "a1",
+      "kind": "audio",
+      "name": "Audio 1",
+    },
+    {
+      "clipCount": 0,
+      "id": "t1",
+      "kind": "text",
+      "name": "Titles",
+    },
+  ],
+  "version": 1,
+}
+`;
+
+exports[`golden NLE export — Final Cut rough cut > long-form-podcast — fcpxml + manifest snapshot > long-form-podcast fcpxml 1`] = `
+"<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE fcpxml>
+<fcpxml version="1.9">
+  <resources>
+    <format id="r1" name="FFVideoFormat1080p30" frameDuration="1/30s" width="1920" height="1080" />
+    <asset id="r2" uid="asset-primary-001" name="interview-a-roll.mov" start="0s" duration="108000/30s" hasVideo="1" hasAudio="1" videoSources="1" audioSources="1" audioChannels="2" audioRate="48000" format="r1">
+      <media-rep kind="original-media" src="file:///Volumes/Media/interview-a-roll.mov" />
+    </asset>
+  </resources>
+  <library>
+    <event name="B-Roll">
+      <clip name="interview-a-roll.mov">
+        <video>
+          <asset-clip ref="r2" offset="0s" name="interview-a-roll.mov" duration="108000/30s" start="0s"/>
+        </video>
+      </clip>
+    </event>
+    <event name="Storyteller Export">
+      <project name="seq-proj-podcast">
+        <sequence duration="7920/30s" format="r1" tcStart="0s" tcFormat="NDF">
+          <spine>
+          <asset-clip name="interview-a-roll.mov" ref="r2" offset="0/30s" duration="330/30s" start="0/30s" enabled="1" tcFormat="NDF"/>
+          <asset-clip name="interview-a-roll.mov" ref="r2" offset="330/30s" duration="330/30s" start="3600/30s" enabled="1" tcFormat="NDF"/>
+          <asset-clip name="interview-a-roll.mov" ref="r2" offset="660/30s" duration="330/30s" start="7200/30s" enabled="1" tcFormat="NDF"/>
+          <asset-clip name="interview-a-roll.mov" ref="r2" offset="990/30s" duration="330/30s" start="10800/30s" enabled="1" tcFormat="NDF"/>
+          <asset-clip name="interview-a-roll.mov" ref="r2" offset="1320/30s" duration="330/30s" start="14400/30s" enabled="1" tcFormat="NDF"/>
+          <asset-clip name="interview-a-roll.mov" ref="r2" offset="1650/30s" duration="330/30s" start="18000/30s" enabled="1" tcFormat="NDF"/>
+          <asset-clip name="interview-a-roll.mov" ref="r2" offset="1980/30s" duration="330/30s" start="21600/30s" enabled="1" tcFormat="NDF"/>
+          <asset-clip name="interview-a-roll.mov" ref="r2" offset="2310/30s" duration="330/30s" start="25200/30s" enabled="1" tcFormat="NDF"/>
+          <asset-clip name="interview-a-roll.mov" ref="r2" offset="2640/30s" duration="330/30s" start="28800/30s" enabled="1" tcFormat="NDF"/>
+          <asset-clip name="interview-a-roll.mov" ref="r2" offset="2970/30s" duration="330/30s" start="32400/30s" enabled="1" tcFormat="NDF"/>
+          <asset-clip name="interview-a-roll.mov" ref="r2" offset="3300/30s" duration="330/30s" start="36000/30s" enabled="1" tcFormat="NDF"/>
+          <asset-clip name="interview-a-roll.mov" ref="r2" offset="3630/30s" duration="330/30s" start="39600/30s" enabled="1" tcFormat="NDF"/>
+          <asset-clip name="interview-a-roll.mov" ref="r2" offset="3960/30s" duration="330/30s" start="43200/30s" enabled="1" tcFormat="NDF"/>
+          <asset-clip name="interview-a-roll.mov" ref="r2" offset="4290/30s" duration="330/30s" start="46800/30s" enabled="1" tcFormat="NDF"/>
+          <asset-clip name="interview-a-roll.mov" ref="r2" offset="4620/30s" duration="330/30s" start="50400/30s" enabled="1" tcFormat="NDF"/>
+          <asset-clip name="interview-a-roll.mov" ref="r2" offset="4950/30s" duration="330/30s" start="54000/30s" enabled="1" tcFormat="NDF"/>
+          <asset-clip name="interview-a-roll.mov" ref="r2" offset="5280/30s" duration="330/30s" start="57600/30s" enabled="1" tcFormat="NDF"/>
+          <asset-clip name="interview-a-roll.mov" ref="r2" offset="5610/30s" duration="330/30s" start="61200/30s" enabled="1" tcFormat="NDF"/>
+          <asset-clip name="interview-a-roll.mov" ref="r2" offset="5940/30s" duration="330/30s" start="64800/30s" enabled="1" tcFormat="NDF"/>
+          <asset-clip name="interview-a-roll.mov" ref="r2" offset="6270/30s" duration="330/30s" start="68400/30s" enabled="1" tcFormat="NDF"/>
+          <asset-clip name="interview-a-roll.mov" ref="r2" offset="6600/30s" duration="330/30s" start="72000/30s" enabled="1" tcFormat="NDF"/>
+          <asset-clip name="interview-a-roll.mov" ref="r2" offset="6930/30s" duration="330/30s" start="75600/30s" enabled="1" tcFormat="NDF"/>
+          <asset-clip name="interview-a-roll.mov" ref="r2" offset="7260/30s" duration="330/30s" start="79200/30s" enabled="1" tcFormat="NDF"/>
+          <asset-clip name="interview-a-roll.mov" ref="r2" offset="7590/30s" duration="330/30s" start="82800/30s" enabled="1" tcFormat="NDF"/>
+          </spine>
+        </sequence>
+      </project>
+    </event>
+  </library>
+</fcpxml>"
+`;
+
+exports[`golden NLE export — Final Cut rough cut > long-form-podcast — fcpxml + manifest snapshot > long-form-podcast manifest 1`] = `
+{
+  "assets": [
+    {
+      "id": "asset-primary-001",
+      "kind": "video",
+      "localPath": "/Volumes/Media/interview-a-roll.mov",
+      "storagePath": "projects/demo/interview-a-roll.mov",
+    },
+    {
+      "id": "asset-secondary-002",
+      "kind": "video",
+      "localPath": "/Volumes/Media/broll-cutaway.mov",
+      "storagePath": "projects/demo/broll-cutaway.mov",
+    },
+  ],
+  "clips": [
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-1",
+      "introRole": undefined,
+      "role": "a-roll",
+      "soundbiteId": "sb-long-1",
+      "sourceInSeconds": 0,
+      "sourceOutSeconds": 11,
+      "timelineInSeconds": 0,
+      "timelineOutSeconds": 11,
+      "trackId": "v1",
+      "trackKind": "video",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-2",
+      "introRole": undefined,
+      "role": "a-roll",
+      "soundbiteId": "sb-long-2",
+      "sourceInSeconds": 120,
+      "sourceOutSeconds": 131,
+      "timelineInSeconds": 11,
+      "timelineOutSeconds": 22,
+      "trackId": "v1",
+      "trackKind": "video",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-3",
+      "introRole": undefined,
+      "role": "a-roll",
+      "soundbiteId": "sb-long-3",
+      "sourceInSeconds": 240,
+      "sourceOutSeconds": 251,
+      "timelineInSeconds": 22,
+      "timelineOutSeconds": 33,
+      "trackId": "v1",
+      "trackKind": "video",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-4",
+      "introRole": undefined,
+      "role": "a-roll",
+      "soundbiteId": "sb-long-4",
+      "sourceInSeconds": 360,
+      "sourceOutSeconds": 371,
+      "timelineInSeconds": 33,
+      "timelineOutSeconds": 44,
+      "trackId": "v1",
+      "trackKind": "video",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-5",
+      "introRole": undefined,
+      "role": "a-roll",
+      "soundbiteId": "sb-long-5",
+      "sourceInSeconds": 480,
+      "sourceOutSeconds": 491,
+      "timelineInSeconds": 44,
+      "timelineOutSeconds": 55,
+      "trackId": "v1",
+      "trackKind": "video",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-6",
+      "introRole": undefined,
+      "role": "a-roll",
+      "soundbiteId": "sb-long-6",
+      "sourceInSeconds": 600,
+      "sourceOutSeconds": 611,
+      "timelineInSeconds": 55,
+      "timelineOutSeconds": 66,
+      "trackId": "v1",
+      "trackKind": "video",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-7",
+      "introRole": undefined,
+      "role": "a-roll",
+      "soundbiteId": "sb-long-7",
+      "sourceInSeconds": 720,
+      "sourceOutSeconds": 731,
+      "timelineInSeconds": 66,
+      "timelineOutSeconds": 77,
+      "trackId": "v1",
+      "trackKind": "video",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-8",
+      "introRole": undefined,
+      "role": "a-roll",
+      "soundbiteId": "sb-long-8",
+      "sourceInSeconds": 840,
+      "sourceOutSeconds": 851,
+      "timelineInSeconds": 77,
+      "timelineOutSeconds": 88,
+      "trackId": "v1",
+      "trackKind": "video",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-9",
+      "introRole": undefined,
+      "role": "a-roll",
+      "soundbiteId": "sb-long-9",
+      "sourceInSeconds": 960,
+      "sourceOutSeconds": 971,
+      "timelineInSeconds": 88,
+      "timelineOutSeconds": 99,
+      "trackId": "v1",
+      "trackKind": "video",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-10",
+      "introRole": undefined,
+      "role": "a-roll",
+      "soundbiteId": "sb-long-10",
+      "sourceInSeconds": 1080,
+      "sourceOutSeconds": 1091,
+      "timelineInSeconds": 99,
+      "timelineOutSeconds": 110,
+      "trackId": "v1",
+      "trackKind": "video",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-11",
+      "introRole": undefined,
+      "role": "a-roll",
+      "soundbiteId": "sb-long-11",
+      "sourceInSeconds": 1200,
+      "sourceOutSeconds": 1211,
+      "timelineInSeconds": 110,
+      "timelineOutSeconds": 121,
+      "trackId": "v1",
+      "trackKind": "video",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-12",
+      "introRole": undefined,
+      "role": "a-roll",
+      "soundbiteId": "sb-long-12",
+      "sourceInSeconds": 1320,
+      "sourceOutSeconds": 1331,
+      "timelineInSeconds": 121,
+      "timelineOutSeconds": 132,
+      "trackId": "v1",
+      "trackKind": "video",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-13",
+      "introRole": undefined,
+      "role": "a-roll",
+      "soundbiteId": "sb-long-13",
+      "sourceInSeconds": 1440,
+      "sourceOutSeconds": 1451,
+      "timelineInSeconds": 132,
+      "timelineOutSeconds": 143,
+      "trackId": "v1",
+      "trackKind": "video",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-14",
+      "introRole": undefined,
+      "role": "a-roll",
+      "soundbiteId": "sb-long-14",
+      "sourceInSeconds": 1560,
+      "sourceOutSeconds": 1571,
+      "timelineInSeconds": 143,
+      "timelineOutSeconds": 154,
+      "trackId": "v1",
+      "trackKind": "video",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-15",
+      "introRole": undefined,
+      "role": "a-roll",
+      "soundbiteId": "sb-long-15",
+      "sourceInSeconds": 1680,
+      "sourceOutSeconds": 1691,
+      "timelineInSeconds": 154,
+      "timelineOutSeconds": 165,
+      "trackId": "v1",
+      "trackKind": "video",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-16",
+      "introRole": undefined,
+      "role": "a-roll",
+      "soundbiteId": "sb-long-16",
+      "sourceInSeconds": 1800,
+      "sourceOutSeconds": 1811,
+      "timelineInSeconds": 165,
+      "timelineOutSeconds": 176,
+      "trackId": "v1",
+      "trackKind": "video",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-17",
+      "introRole": undefined,
+      "role": "a-roll",
+      "soundbiteId": "sb-long-17",
+      "sourceInSeconds": 1920,
+      "sourceOutSeconds": 1931,
+      "timelineInSeconds": 176,
+      "timelineOutSeconds": 187,
+      "trackId": "v1",
+      "trackKind": "video",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-18",
+      "introRole": undefined,
+      "role": "a-roll",
+      "soundbiteId": "sb-long-18",
+      "sourceInSeconds": 2040,
+      "sourceOutSeconds": 2051,
+      "timelineInSeconds": 187,
+      "timelineOutSeconds": 198,
+      "trackId": "v1",
+      "trackKind": "video",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-19",
+      "introRole": undefined,
+      "role": "a-roll",
+      "soundbiteId": "sb-long-19",
+      "sourceInSeconds": 2160,
+      "sourceOutSeconds": 2171,
+      "timelineInSeconds": 198,
+      "timelineOutSeconds": 209,
+      "trackId": "v1",
+      "trackKind": "video",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-20",
+      "introRole": undefined,
+      "role": "a-roll",
+      "soundbiteId": "sb-long-20",
+      "sourceInSeconds": 2280,
+      "sourceOutSeconds": 2291,
+      "timelineInSeconds": 209,
+      "timelineOutSeconds": 220,
+      "trackId": "v1",
+      "trackKind": "video",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-21",
+      "introRole": undefined,
+      "role": "a-roll",
+      "soundbiteId": "sb-long-21",
+      "sourceInSeconds": 2400,
+      "sourceOutSeconds": 2411,
+      "timelineInSeconds": 220,
+      "timelineOutSeconds": 231,
+      "trackId": "v1",
+      "trackKind": "video",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-22",
+      "introRole": undefined,
+      "role": "a-roll",
+      "soundbiteId": "sb-long-22",
+      "sourceInSeconds": 2520,
+      "sourceOutSeconds": 2531,
+      "timelineInSeconds": 231,
+      "timelineOutSeconds": 242,
+      "trackId": "v1",
+      "trackKind": "video",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-23",
+      "introRole": undefined,
+      "role": "a-roll",
+      "soundbiteId": "sb-long-23",
+      "sourceInSeconds": 2640,
+      "sourceOutSeconds": 2651,
+      "timelineInSeconds": 242,
+      "timelineOutSeconds": 253,
+      "trackId": "v1",
+      "trackKind": "video",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-24",
+      "introRole": undefined,
+      "role": "a-roll",
+      "soundbiteId": "sb-long-24",
+      "sourceInSeconds": 2760,
+      "sourceOutSeconds": 2771,
+      "timelineInSeconds": 253,
+      "timelineOutSeconds": 264,
+      "trackId": "v1",
+      "trackKind": "video",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-1-audio",
+      "introRole": undefined,
+      "role": "nat-audio",
+      "soundbiteId": "sb-long-1",
+      "sourceInSeconds": 0,
+      "sourceOutSeconds": 11,
+      "timelineInSeconds": 0,
+      "timelineOutSeconds": 11,
+      "trackId": "a1",
+      "trackKind": "audio",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-2-audio",
+      "introRole": undefined,
+      "role": "nat-audio",
+      "soundbiteId": "sb-long-2",
+      "sourceInSeconds": 120,
+      "sourceOutSeconds": 131,
+      "timelineInSeconds": 11,
+      "timelineOutSeconds": 22,
+      "trackId": "a1",
+      "trackKind": "audio",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-3-audio",
+      "introRole": undefined,
+      "role": "nat-audio",
+      "soundbiteId": "sb-long-3",
+      "sourceInSeconds": 240,
+      "sourceOutSeconds": 251,
+      "timelineInSeconds": 22,
+      "timelineOutSeconds": 33,
+      "trackId": "a1",
+      "trackKind": "audio",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-4-audio",
+      "introRole": undefined,
+      "role": "nat-audio",
+      "soundbiteId": "sb-long-4",
+      "sourceInSeconds": 360,
+      "sourceOutSeconds": 371,
+      "timelineInSeconds": 33,
+      "timelineOutSeconds": 44,
+      "trackId": "a1",
+      "trackKind": "audio",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-5-audio",
+      "introRole": undefined,
+      "role": "nat-audio",
+      "soundbiteId": "sb-long-5",
+      "sourceInSeconds": 480,
+      "sourceOutSeconds": 491,
+      "timelineInSeconds": 44,
+      "timelineOutSeconds": 55,
+      "trackId": "a1",
+      "trackKind": "audio",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-6-audio",
+      "introRole": undefined,
+      "role": "nat-audio",
+      "soundbiteId": "sb-long-6",
+      "sourceInSeconds": 600,
+      "sourceOutSeconds": 611,
+      "timelineInSeconds": 55,
+      "timelineOutSeconds": 66,
+      "trackId": "a1",
+      "trackKind": "audio",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-7-audio",
+      "introRole": undefined,
+      "role": "nat-audio",
+      "soundbiteId": "sb-long-7",
+      "sourceInSeconds": 720,
+      "sourceOutSeconds": 731,
+      "timelineInSeconds": 66,
+      "timelineOutSeconds": 77,
+      "trackId": "a1",
+      "trackKind": "audio",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-8-audio",
+      "introRole": undefined,
+      "role": "nat-audio",
+      "soundbiteId": "sb-long-8",
+      "sourceInSeconds": 840,
+      "sourceOutSeconds": 851,
+      "timelineInSeconds": 77,
+      "timelineOutSeconds": 88,
+      "trackId": "a1",
+      "trackKind": "audio",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-9-audio",
+      "introRole": undefined,
+      "role": "nat-audio",
+      "soundbiteId": "sb-long-9",
+      "sourceInSeconds": 960,
+      "sourceOutSeconds": 971,
+      "timelineInSeconds": 88,
+      "timelineOutSeconds": 99,
+      "trackId": "a1",
+      "trackKind": "audio",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-10-audio",
+      "introRole": undefined,
+      "role": "nat-audio",
+      "soundbiteId": "sb-long-10",
+      "sourceInSeconds": 1080,
+      "sourceOutSeconds": 1091,
+      "timelineInSeconds": 99,
+      "timelineOutSeconds": 110,
+      "trackId": "a1",
+      "trackKind": "audio",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-11-audio",
+      "introRole": undefined,
+      "role": "nat-audio",
+      "soundbiteId": "sb-long-11",
+      "sourceInSeconds": 1200,
+      "sourceOutSeconds": 1211,
+      "timelineInSeconds": 110,
+      "timelineOutSeconds": 121,
+      "trackId": "a1",
+      "trackKind": "audio",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-12-audio",
+      "introRole": undefined,
+      "role": "nat-audio",
+      "soundbiteId": "sb-long-12",
+      "sourceInSeconds": 1320,
+      "sourceOutSeconds": 1331,
+      "timelineInSeconds": 121,
+      "timelineOutSeconds": 132,
+      "trackId": "a1",
+      "trackKind": "audio",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-13-audio",
+      "introRole": undefined,
+      "role": "nat-audio",
+      "soundbiteId": "sb-long-13",
+      "sourceInSeconds": 1440,
+      "sourceOutSeconds": 1451,
+      "timelineInSeconds": 132,
+      "timelineOutSeconds": 143,
+      "trackId": "a1",
+      "trackKind": "audio",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-14-audio",
+      "introRole": undefined,
+      "role": "nat-audio",
+      "soundbiteId": "sb-long-14",
+      "sourceInSeconds": 1560,
+      "sourceOutSeconds": 1571,
+      "timelineInSeconds": 143,
+      "timelineOutSeconds": 154,
+      "trackId": "a1",
+      "trackKind": "audio",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-15-audio",
+      "introRole": undefined,
+      "role": "nat-audio",
+      "soundbiteId": "sb-long-15",
+      "sourceInSeconds": 1680,
+      "sourceOutSeconds": 1691,
+      "timelineInSeconds": 154,
+      "timelineOutSeconds": 165,
+      "trackId": "a1",
+      "trackKind": "audio",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-16-audio",
+      "introRole": undefined,
+      "role": "nat-audio",
+      "soundbiteId": "sb-long-16",
+      "sourceInSeconds": 1800,
+      "sourceOutSeconds": 1811,
+      "timelineInSeconds": 165,
+      "timelineOutSeconds": 176,
+      "trackId": "a1",
+      "trackKind": "audio",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-17-audio",
+      "introRole": undefined,
+      "role": "nat-audio",
+      "soundbiteId": "sb-long-17",
+      "sourceInSeconds": 1920,
+      "sourceOutSeconds": 1931,
+      "timelineInSeconds": 176,
+      "timelineOutSeconds": 187,
+      "trackId": "a1",
+      "trackKind": "audio",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-18-audio",
+      "introRole": undefined,
+      "role": "nat-audio",
+      "soundbiteId": "sb-long-18",
+      "sourceInSeconds": 2040,
+      "sourceOutSeconds": 2051,
+      "timelineInSeconds": 187,
+      "timelineOutSeconds": 198,
+      "trackId": "a1",
+      "trackKind": "audio",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-19-audio",
+      "introRole": undefined,
+      "role": "nat-audio",
+      "soundbiteId": "sb-long-19",
+      "sourceInSeconds": 2160,
+      "sourceOutSeconds": 2171,
+      "timelineInSeconds": 198,
+      "timelineOutSeconds": 209,
+      "trackId": "a1",
+      "trackKind": "audio",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-20-audio",
+      "introRole": undefined,
+      "role": "nat-audio",
+      "soundbiteId": "sb-long-20",
+      "sourceInSeconds": 2280,
+      "sourceOutSeconds": 2291,
+      "timelineInSeconds": 209,
+      "timelineOutSeconds": 220,
+      "trackId": "a1",
+      "trackKind": "audio",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-21-audio",
+      "introRole": undefined,
+      "role": "nat-audio",
+      "soundbiteId": "sb-long-21",
+      "sourceInSeconds": 2400,
+      "sourceOutSeconds": 2411,
+      "timelineInSeconds": 220,
+      "timelineOutSeconds": 231,
+      "trackId": "a1",
+      "trackKind": "audio",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-22-audio",
+      "introRole": undefined,
+      "role": "nat-audio",
+      "soundbiteId": "sb-long-22",
+      "sourceInSeconds": 2520,
+      "sourceOutSeconds": 2531,
+      "timelineInSeconds": 231,
+      "timelineOutSeconds": 242,
+      "trackId": "a1",
+      "trackKind": "audio",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-23-audio",
+      "introRole": undefined,
+      "role": "nat-audio",
+      "soundbiteId": "sb-long-23",
+      "sourceInSeconds": 2640,
+      "sourceOutSeconds": 2651,
+      "timelineInSeconds": 242,
+      "timelineOutSeconds": 253,
+      "trackId": "a1",
+      "trackKind": "audio",
+      "transcriptSegmentIds": undefined,
+    },
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-sb-long-24-audio",
+      "introRole": undefined,
+      "role": "nat-audio",
+      "soundbiteId": "sb-long-24",
+      "sourceInSeconds": 2760,
+      "sourceOutSeconds": 2771,
+      "timelineInSeconds": 253,
+      "timelineOutSeconds": 264,
+      "trackId": "a1",
+      "trackKind": "audio",
+      "transcriptSegmentIds": undefined,
+    },
+  ],
+  "generatedAt": "2026-06-25T12:00:00.000Z",
+  "manifestSchemaVersion": 1,
+  "markers": [],
+  "projectId": "proj-podcast",
+  "sequenceId": "seq-proj-podcast",
+  "targetNle": "final-cut-pro",
+  "textOverlayRefs": [],
+  "tracks": [
+    {
+      "clipCount": 24,
+      "id": "v1",
+      "kind": "video",
+      "name": "Video 1",
+    },
+    {
+      "clipCount": 24,
+      "id": "a1",
+      "kind": "audio",
+      "name": "Audio 1",
+    },
+    {
+      "clipCount": 0,
+      "id": "t1",
+      "kind": "text",
+      "name": "Titles",
+    },
+  ],
+  "version": 1,
+}
+`;
+
+exports[`golden NLE export — Final Cut rough cut > single-clip — fcpxml + manifest snapshot > single-clip fcpxml 1`] = `
+"<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE fcpxml>
+<fcpxml version="1.9">
+  <resources>
+    <format id="r1" name="FFVideoFormat1080p30" frameDuration="1/30s" width="1920" height="1080" />
+    <asset id="r2" uid="asset-primary-001" name="interview-a-roll.mov" start="0s" duration="108000/30s" hasVideo="1" hasAudio="1" videoSources="1" audioSources="1" audioChannels="2" audioRate="48000" format="r1">
+      <media-rep kind="original-media" src="file:///Volumes/Media/interview-a-roll.mov" />
+    </asset>
+  </resources>
+  <library>
+    <event name="B-Roll">
+      <clip name="interview-a-roll.mov">
+        <video>
+          <asset-clip ref="r2" offset="0s" name="interview-a-roll.mov" duration="108000/30s" start="0s"/>
+        </video>
+      </clip>
+    </event>
+    <event name="Storyteller Export">
+      <project name="seq-single">
+        <sequence duration="450/30s" format="r1" tcStart="0s" tcFormat="NDF">
+          <spine>
+          <asset-clip name="interview-a-roll.mov" ref="r2" offset="0/30s" duration="450/30s" start="300/30s" enabled="1" tcFormat="NDF"/>
+          </spine>
+        </sequence>
+      </project>
+    </event>
+  </library>
+</fcpxml>"
+`;
+
+exports[`golden NLE export — Final Cut rough cut > single-clip — fcpxml + manifest snapshot > single-clip manifest 1`] = `
+{
+  "assets": [
+    {
+      "id": "asset-primary-001",
+      "kind": "video",
+      "localPath": "/Volumes/Media/interview-a-roll.mov",
+      "storagePath": "projects/demo/interview-a-roll.mov",
+    },
+    {
+      "id": "asset-secondary-002",
+      "kind": "video",
+      "localPath": "/Volumes/Media/broll-cutaway.mov",
+      "storagePath": "projects/demo/broll-cutaway.mov",
+    },
+  ],
+  "clips": [
+    {
+      "assetId": "asset-primary-001",
+      "id": "clip-single",
+      "introRole": undefined,
+      "role": "a-roll",
+      "soundbiteId": undefined,
+      "sourceInSeconds": 10,
+      "sourceOutSeconds": 25,
+      "timelineInSeconds": 0,
+      "timelineOutSeconds": 15,
+      "trackId": "v1",
+      "trackKind": "video",
+      "transcriptSegmentIds": undefined,
+    },
+  ],
+  "generatedAt": "2026-06-25T12:00:00.000Z",
+  "manifestSchemaVersion": 1,
+  "markers": [],
+  "projectId": "proj-single",
+  "sequenceId": "seq-single",
+  "targetNle": "final-cut-pro",
+  "textOverlayRefs": [],
+  "tracks": [
+    {
+      "clipCount": 1,
+      "id": "v1",
+      "kind": "video",
+      "name": "Video 1",
+    },
+    {
+      "clipCount": 0,
+      "id": "a1",
+      "kind": "audio",
+      "name": "Audio 1",
+    },
+    {
+      "clipCount": 0,
+      "id": "t1",
+      "kind": "text",
+      "name": "Titles",
+    },
+  ],
+  "version": 1,
+}
+`;

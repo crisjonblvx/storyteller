@@ -10,11 +10,15 @@ import {
   framePositionToFfmpegCrop,
   type FramePosition,
   type OverlayEvent,
+  type SoundDesignSlot,
   type TimelineSequence
 } from '@storyteller/timeline'
 import type { ProjectOrientation } from '@storyteller/shared'
+import type { SoundAssetResolution } from '@storyteller/audio'
+import type { AudioDnaDefinition } from '@storyteller/analysis'
 import ffmpegPath from 'ffmpeg-static'
 import { buildSrtFromTimeline } from './captions.js'
+import { mixAudioDirectorPass } from './audio-mix.js'
 
 export type CaptionStyle = {
   fontSize?: number
@@ -402,6 +406,12 @@ export async function exportTimelineToMp4(params: {
     segmentsByAsset?: Record<string, TranscriptSegment[]>
     style?: CaptionStyle
   }
+  soundDesign?: {
+    resolutions: SoundAssetResolution[]
+    slots: SoundDesignSlot[]
+    audioDna: AudioDnaDefinition
+    targetLufs?: number
+  }
   onProgress?: (p: Mp4ExportProgress) => void
 }): Promise<{ ok: true } | { ok: false; error: string }> {
   const { sequence, assetPathsById, outputPath, onProgress, captions } = params
@@ -702,6 +712,30 @@ export async function exportTimelineToMp4(params: {
     }
 
     onProgress?.({ phase: 'complete', outputPath })
+
+    if (params.soundDesign) {
+      const { resolutions, slots, audioDna, targetLufs } = params.soundDesign
+      const sfxOut = join(workDir, 'with_sfx.mp4')
+      const mixResult = await mixAudioDirectorPass({
+        inputVideoPath: outputPath,
+        outputVideoPath: sfxOut,
+        resolutions,
+        slots,
+        audioDna,
+        sequenceDurationSeconds: sequence.durationSeconds,
+        targetLufs,
+        onProgress: (p) => {
+          if (p.phase === 'mixing_sfx' || p.phase === 'normalizing') {
+            onProgress?.({ phase: 'concatenating', detail: p.detail ?? 'Mixing audio…' })
+          }
+        }
+      })
+      if (mixResult.ok) {
+        await copyFile(sfxOut, outputPath)
+      }
+      // On failure: silently keep the original outputPath (no SFX, but export succeeds).
+    }
+
     return { ok: true }
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)

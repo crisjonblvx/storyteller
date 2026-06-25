@@ -589,5 +589,33 @@ contextBridge.exposeInMainWorld('storyteller', {
     ipcRenderer.invoke('media:analyzeBeat', filePath) as Promise<
       | { ok: true; bpm: number; beats: number[]; durationSeconds: number }
       | { ok: false; error: string }
-    >
+    >,
+
+  /**
+   * Auto-assign highlight clips to game phases using AI.
+   * The main process calls OpenAI directly; never requires a signed-in user.
+   */
+  autoAssignHighlightClips: (payload: {
+    clips: Array<{
+      id: string
+      role: string
+      file_name: string
+      duration_seconds: number | null
+    }>
+    sport: string
+  }) =>
+    ipcRenderer.invoke('highlight:autoAssignClips', payload) as Promise<
+      | {
+          ok: true
+          assignments: Array<{
+            assetId: string
+            phase: string
+            role: string
+            highlightScore: number
+            confidence: number
+            orderInPhase: number
+          }>
+        }
+      | { ok: false; error: string }
+    >,
 })

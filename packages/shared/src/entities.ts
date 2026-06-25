@@ -101,6 +101,37 @@ export const CREATOR_CLIP_ROLES: { id: CreatorClipRole; label: string; descripti
 ]
 
 /**
+ * Highlight clip role — assigned during footage ingest to drive
+ * sports-highlight auto-assembly in `buildHighlightReel()`.
+ *
+ * - hype       : Opening energy: crowd, warm-up, entrance
+ * - play       : Game action: the key moments and plays
+ * - reaction   : Celebration, sideline, emotion
+ * - commentary : Coach, analyst, or athlete talking head
+ * - crowd      : Atmosphere and context B-roll
+ * - recap      : End card, stat graphic, or CTA
+ * - unassigned : Not yet categorized
+ */
+export type HighlightClipRole =
+  | 'hype'
+  | 'play'
+  | 'reaction'
+  | 'commentary'
+  | 'crowd'
+  | 'recap'
+  | 'unassigned'
+
+export const HIGHLIGHT_CLIP_ROLES: { id: HighlightClipRole; label: string; description: string }[] = [
+  { id: 'hype',        label: 'Hype',        description: 'Opening energy: crowd, warm-up, entrance' },
+  { id: 'play',        label: 'Play',        description: 'Game action: the key moments and plays' },
+  { id: 'reaction',   label: 'Reaction',    description: 'Celebration, sideline, emotion' },
+  { id: 'commentary', label: 'Commentary',  description: 'Coach, analyst, or athlete talking head' },
+  { id: 'crowd',      label: 'Crowd',       description: 'Atmosphere and context B-roll' },
+  { id: 'recap',      label: 'Recap',       description: 'End card, stat graphic, or CTA' },
+  { id: 'unassigned', label: 'Unassigned',  description: 'Not yet categorized' },
+]
+
+/**
  * Auto-suggest a creator clip role from filename and asset characteristics.
  * Returns `unassigned` when no strong signal is found.
  */
@@ -126,6 +157,68 @@ export function suggestCreatorClipRole(
   if (typeof durationSeconds === 'number' && durationSeconds < 6) return 'broll'
 
   return 'unassigned'
+}
+
+/**
+ * Game phase for sports highlight timelines — orders clips chronologically
+ * by moment within the game. Used in `TimelineSegment.phase`.
+ */
+export type GamePhase =
+  | 'pregame'
+  | 'first_half'
+  | 'halftime'
+  | 'second_half'
+  | 'final_moments'
+  | 'postgame'
+
+export const GAME_PHASES: { id: GamePhase; label: string; short: string }[] = [
+  { id: 'pregame',       label: 'Pregame',       short: 'Pre'   },
+  { id: 'first_half',    label: 'First Half',    short: '1H'    },
+  { id: 'halftime',      label: 'Halftime',      short: 'HT'    },
+  { id: 'second_half',   label: 'Second Half',   short: '2H'    },
+  { id: 'final_moments', label: 'Final Moments', short: 'Final' },
+  { id: 'postgame',      label: 'Postgame',      short: 'Post'  },
+]
+
+/**
+ * Structured settings for sports highlight projects.
+ * Replaces the brittle free-form `aiDirection` string approach.
+ * Stored on `LocalProject.highlightSettings`; can be serialised to
+ * `Project.settings_json` when syncing to Supabase.
+ */
+export interface HighlightSettings {
+  /** e.g. "Basketball", "Soccer" */
+  sport: string
+  /** Template ID from the setup flow, e.g. "espn" | "nba_social" | "nike" | "recruiting" | "raw_energy" */
+  reelStyle: string
+  musicTrackName?: string
+  beatSyncEnabled: boolean
+  /** e.g. "NCAA", "NBA", "High School" */
+  league?: string
+  /** e.g. "men", "women" */
+  gender?: string
+  team?: string
+  /** Clip-to-phase timeline assignments, persisted alongside highlight settings in Supabase. */
+  timelineSegments?: TimelineSegment[]
+}
+
+/**
+ * A single clip assigned to the highlight timeline, with phase placement
+ * and highlight scoring. Stored on `LocalProject.timelineSegments`.
+ */
+export interface TimelineSegment {
+  id: string
+  assetId: string
+  role: HighlightClipRole
+  phase: GamePhase
+  /** 0–100 highlight importance score */
+  highlightScore: number
+  /** Sort order within the phase lane */
+  orderInPhase: number
+  /** 0–1 AI confidence in the phase assignment (set by auto-assign) */
+  confidence?: number
+  durationSeconds?: number
+  notes?: string
 }
 
 /** `image` kept for legacy rows; new uploads use `photo` for stills */
@@ -159,6 +252,16 @@ export interface ProjectSettings {
    * builder. Defaults to true for backward compatibility.
    */
   broll_transitions_enabled?: boolean
+  /**
+   * Filename of the music track uploaded for beat-synced highlight reel cuts.
+   * Stored here so the assembly AI knows a track was provided.
+   */
+  music_track_name?: string
+  /**
+   * When true, the assembly AI will align cuts to detected beat markers in the
+   * music track. Only meaningful when `music_track_name` is set.
+   */
+  beat_sync_enabled?: boolean
 }
 
 /** Default cinematic B-roll shot length when the project hasn't set one. */
@@ -188,6 +291,7 @@ export interface Project {
   description: string | null
   status: ProjectStatus
   settings_json: ProjectSettings | null
+  highlight_settings?: HighlightSettings | null
   created_at: string
   updated_at: string
 }
@@ -222,6 +326,12 @@ export interface Asset {
   clip_role: JournalismClipRole | null
   /** Creator role assigned at ingest — drives creator-cut assembly. */
   creator_clip_role: CreatorClipRole | null
+  /** Highlight role assigned at ingest — drives sports highlight-reel assembly. */
+  highlight_clip_role: HighlightClipRole | null
+  /** Game phase this clip belongs to (highlight mode). Set via HighlightTimeline. */
+  game_phase?: GamePhase
+  /** 0–100 highlight importance score. Higher = more likely to be featured. */
+  highlight_score?: number
   created_at: string
 }
 

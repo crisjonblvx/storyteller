@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import type { StoryMode } from '@storyteller/shared'
 import { intentToMode } from '@storyteller/shared'
-import type { StoryIntent, PrimaryGoal } from '@storyteller/shared'
+import type { StoryIntent, PrimaryGoal, HighlightSettings } from '@storyteller/shared'
 import { useProjectWorkflow } from '@renderer/stores/project-workflow'
 import { IntroSplashScreen } from '@renderer/components/IntroSplashScreen'
 import storytellerLogo from '@renderer/assets/storyteller-logo.png'
@@ -29,6 +29,15 @@ interface StoryType {
 }
 
 const STORY_TYPES: StoryType[] = [
+  {
+    intent: 'sports_highlight',
+    title: 'Sports Highlight Reel',
+    description: 'Build your highlight reel. Drop in game footage, plays, and celebrations — Storyteller edits it to music, paced like the pros.',
+    gradient: 'linear-gradient(135deg, rgba(14,165,233,0.88) 0%, rgba(2,132,199,0.7) 50%, rgba(8,47,73,0.75) 100%)',
+    cardImage: eventHighlightImg,
+    icon: '⚡',
+    mode: 'highlight',
+  },
   {
     intent: 'brand_intro',
     title: 'Brand Intro / Show Open',
@@ -94,8 +103,8 @@ const STORY_TYPES: StoryType[] = [
   },
   {
     intent: 'event_highlight',
-    title: 'Event Highlight',
-    description: 'Turn conferences, graduations, sports, concerts, and community events into recap videos.',
+    title: 'Event Recap',
+    description: 'Turn conferences, graduations, concerts, and community events into a polished recap video.',
     gradient: 'linear-gradient(135deg, rgba(180,83,9,0.85) 0%, rgba(69,26,3,0.6) 100%)',
     cardImage: eventHighlightImg,
     icon: '🏆',
@@ -111,6 +120,99 @@ const STORY_TYPES: StoryType[] = [
     mode: 'story',
   },
 ]
+
+// ─── Sport picker data ────────────────────────────────────────────────────────
+
+interface Sport {
+  id: string
+  label: string
+  emoji: string
+}
+
+const SPORTS: Sport[] = [
+  { id: 'basketball',  label: 'Basketball',   emoji: '🏀' },
+  { id: 'soccer',      label: 'Soccer',        emoji: '⚽' },
+  { id: 'football',    label: 'Football',      emoji: '🏈' },
+  { id: 'baseball',    label: 'Baseball',      emoji: '⚾' },
+  { id: 'volleyball',  label: 'Volleyball',    emoji: '🏐' },
+  { id: 'lacrosse',    label: 'Lacrosse',      emoji: '🥍' },
+  { id: 'swimming',    label: 'Swimming',      emoji: '🏊' },
+  { id: 'track',       label: 'Track & Field', emoji: '🏃' },
+  { id: 'tennis',      label: 'Tennis',        emoji: '🎾' },
+  { id: 'hockey',      label: 'Hockey',        emoji: '🏒' },
+  { id: 'wrestling',   label: 'Wrestling',     emoji: '🤼' },
+  { id: 'other',       label: 'Other',         emoji: '🎯' },
+]
+
+// ─── Pro Reel template data ───────────────────────────────────────────────────
+
+interface ProReelTemplate {
+  id: string
+  name: string
+  emoji: string
+  description: string
+  vibe: string
+  paceLabel: string
+  color: string
+}
+
+const PRO_REEL_TEMPLATES: ProReelTemplate[] = [
+  {
+    id: 'espn',
+    name: 'ESPN Broadcast',
+    emoji: '📺',
+    description: 'Bold cuts, graphic overlays, and broadcast pacing. Built for the big screen.',
+    vibe: 'Dramatic · High energy · Broadcast',
+    paceLabel: 'Cinematic',
+    color: '#ef4444',
+  },
+  {
+    id: 'nba_social',
+    name: 'NBA Social',
+    emoji: '🏀',
+    description: 'Fast cuts, music-driven, vertical-first. Designed for Instagram and TikTok.',
+    vibe: 'Punchy · Music-driven · Social',
+    paceLabel: 'Fast',
+    color: '#3b82f6',
+  },
+  {
+    id: 'nike',
+    name: 'Nike / Hype Film',
+    emoji: '⚡',
+    description: 'Slow-motion hero moments, cinematic B-roll, minimal text. Pure athlete story.',
+    vibe: 'Cinematic · Emotional · Aspirational',
+    paceLabel: 'Slow-mo',
+    color: '#f97316',
+  },
+  {
+    id: 'recruiting',
+    name: 'Recruiting Tape',
+    emoji: '🎓',
+    description: 'Clean, coach-friendly cuts. Stat overlays, full plays visible, professional tone.',
+    vibe: 'Clean · Professional · Coach-ready',
+    paceLabel: 'Measured',
+    color: '#8b5cf6',
+  },
+  {
+    id: 'raw_energy',
+    name: 'Raw Energy',
+    emoji: '🔥',
+    description: 'Unfiltered hype. Fast edits, crowd reactions, celebration-heavy. Made to go viral.',
+    vibe: 'Hype · Viral · Crowd-first',
+    paceLabel: 'Ultra fast',
+    color: '#f59e0b',
+  },
+]
+
+// ─── Highlight settings helpers ───────────────────────────────────────────────
+
+function buildAiDirectionFromSettings(s: HighlightSettings): string {
+  const parts: string[] = [`Sport: ${s.sport}`, `Style: ${s.reelStyle}`]
+  if (s.musicTrackName && s.beatSyncEnabled) {
+    parts.push(`Beat-sync: enabled. Music track: ${s.musicTrackName}.`)
+  }
+  return parts.join('. ')
+}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -152,6 +254,11 @@ export function ProjectSetupPage() {
   const [aspectRatio, setAspectRatio] = useState<'16:9' | '9:16' | '1:1'>(existing?.aspectRatio ?? '16:9')
   const [primaryGoal, setPrimaryGoal] = useState<PrimaryGoal>(existing?.primaryGoal ?? 'fast_social')
   const [hoveredIntent, setHoveredIntent] = useState<StoryIntent | null>(null)
+  const [setupStep, setSetupStep] = useState<'type-picker' | 'sport-picker' | 'highlight_template'>('type-picker')
+  const [selectedSport, setSelectedSport] = useState<string | null>(null)
+  const [hoveredSport, setHoveredSport] = useState<string | null>(null)
+  const [selectedTemplate, setSelectedTemplate] = useState<ProReelTemplate | null>(null)
+  const [hoveredTemplate, setHoveredTemplate] = useState<string | null>(null)
 
   useEffect(() => {
     if (!existing) return
@@ -164,10 +271,38 @@ export function ProjectSetupPage() {
   const onSubmit = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault()
+      if (selectedIntent === 'sports_highlight' && isNew && setupStep === 'type-picker') {
+        setSetupStep('sport-picker')
+        return
+      }
+      if (selectedIntent === 'sports_highlight' && isNew && setupStep === 'sport-picker') {
+        setSetupStep('highlight_template')
+        return
+      }
       const mode = intentToMode(selectedIntent)
       if (isNew) {
         const id = createLocalProject(title, mode)
-        updateProject(id, { intent: selectedIntent, primaryGoal, aspectRatio })
+
+        let highlightSettings: HighlightSettings | undefined
+        let aiDirection: string | undefined
+
+        if (selectedIntent === 'sports_highlight' && selectedSport) {
+          const sportLabel = selectedSport.charAt(0).toUpperCase() + selectedSport.slice(1)
+          highlightSettings = {
+            sport: sportLabel,
+            reelStyle: selectedTemplate?.id ?? 'espn',
+            beatSyncEnabled: false,
+          }
+          aiDirection = buildAiDirectionFromSettings(highlightSettings)
+        }
+
+        updateProject(id, {
+          intent: selectedIntent,
+          primaryGoal,
+          aspectRatio,
+          ...(highlightSettings ? { highlightSettings } : {}),
+          ...(aiDirection ? { aiDirection } : {}),
+        })
         navigate(`/project/${id}`)
         return
       }
@@ -176,7 +311,7 @@ export function ProjectSetupPage() {
         navigate(`/project/${projectId}`)
       }
     },
-    [createLocalProject, isNew, selectedIntent, navigate, projectId, primaryGoal, aspectRatio, title, updateProject]
+    [createLocalProject, isNew, selectedIntent, navigate, projectId, primaryGoal, aspectRatio, title, updateProject, setupStep, selectedSport, selectedTemplate]
   )
 
   if (!isNew && projectId && !existing) {
@@ -218,45 +353,165 @@ export function ProjectSetupPage() {
 
       {/* Body: left + right flex row */}
       <div style={bodyWrap}>
-        {/* ── Left: intent picker ── */}
+        {/* ── Left: intent picker OR sport picker OR template picker ── */}
         <div style={leftCol}>
-          <h1 style={mainHeading}>What's Your Story?</h1>
-          <p style={mainSubtitle}>
-            Pick what you're creating today. Storyteller will automatically set up the right workflow, timeline, and AI
-            tools.
-          </p>
+          {setupStep === 'type-picker' ? (
+            <>
+              <h1 style={mainHeading}>What's Your Story?</h1>
+              <p style={mainSubtitle}>
+                Pick what you're creating today. Storyteller will automatically set up the right workflow, timeline, and
+                AI tools.
+              </p>
 
-          {/* 3×3 grid */}
-          <div style={cardGrid}>
-            {STORY_TYPES.map((type) => {
-              const isSelected = selectedIntent === type.intent
-              const isHovered = hoveredIntent === type.intent
-              return (
+              {/* 3-column grid (sports card spans full width on first row for visual dominance) */}
+              <div style={cardGrid}>
+                {STORY_TYPES.map((type) => {
+                  const isSelected = selectedIntent === type.intent
+                  const isHovered = hoveredIntent === type.intent
+                  return (
+                    <button
+                      key={type.intent}
+                      type="button"
+                      onClick={() => setSelectedIntent(type.intent)}
+                      onMouseEnter={() => setHoveredIntent(type.intent)}
+                      onMouseLeave={() => setHoveredIntent(null)}
+                      style={
+                        type.intent === 'sports_highlight'
+                          ? sportsHeroCard(isSelected, isHovered)
+                          : storyCard(type.gradient, type.cardImage, isSelected, isHovered)
+                      }
+                    >
+                      {type.intent === 'sports_highlight' ? (
+                        /* Hero card: big emoji left, text right */
+                        <>
+                          <div style={{ fontSize: 56, lineHeight: 1, flexShrink: 0, filter: 'drop-shadow(0 2px 8px rgba(14,165,233,0.5))' }}>
+                            ⚡
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <div style={sportsCardTitle}>{type.title}</div>
+                            <div style={sportsCardDesc}>{type.description}</div>
+                          </div>
+                          {isSelected && <div style={sportsCheckBadge}>✓</div>}
+                        </>
+                      ) : (
+                        <>
+                          <div style={cardIconWrap}>
+                            <span style={{ fontSize: 16 }}>{type.icon}</span>
+                          </div>
+                          {isSelected && <div style={checkBadge}>✓</div>}
+                          <div style={cardTitle}>{type.title}</div>
+                          <div style={cardDesc}>{type.description}</div>
+                        </>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            </>
+          ) : setupStep === 'sport-picker' ? (
+            /* ── Sport picker step ── */
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 10 }}>
                 <button
-                  key={type.intent}
                   type="button"
-                  onClick={() => setSelectedIntent(type.intent)}
-                  onMouseEnter={() => setHoveredIntent(type.intent)}
-                  onMouseLeave={() => setHoveredIntent(null)}
-                  style={storyCard(type.gradient, type.cardImage, isSelected, isHovered)}
+                  onClick={() => { setSetupStep('type-picker'); setSelectedSport(null) }}
+                  style={backBtn}
                 >
-                  {/* Icon */}
-                  <div style={cardIconWrap}>
-                    <span style={{ fontSize: 16 }}>{type.icon}</span>
-                  </div>
-
-                  {/* Selected checkmark */}
-                  {isSelected && (
-                    <div style={checkBadge}>✓</div>
-                  )}
-
-                  {/* Text */}
-                  <div style={cardTitle}>{type.title}</div>
-                  <div style={cardDesc}>{type.description}</div>
+                  ← Back
                 </button>
-              )
-            })}
-          </div>
+                <h1 style={{ ...mainHeading, margin: 0 }}>What's Your Sport?</h1>
+              </div>
+              <p style={{ ...mainSubtitle, marginBottom: 28 }}>
+                Storyteller will tune the pacing, energy, and clip-tagging to your sport's rhythm. Pick one to begin.
+              </p>
+
+              <div style={sportGrid}>
+                {SPORTS.map((sport) => {
+                  const isSel = selectedSport === sport.id
+                  const isHov = hoveredSport === sport.id
+                  return (
+                    <button
+                      key={sport.id}
+                      type="button"
+                      onClick={() => setSelectedSport(sport.id)}
+                      onMouseEnter={() => setHoveredSport(sport.id)}
+                      onMouseLeave={() => setHoveredSport(null)}
+                      style={sportChip(isSel, isHov)}
+                    >
+                      <span style={{ fontSize: 30, lineHeight: 1 }}>{sport.emoji}</span>
+                      <span style={{
+                        fontSize: 12,
+                        fontWeight: 700,
+                        letterSpacing: '0.02em',
+                        color: isSel ? '#38bdf8' : '#e5e7eb',
+                        marginTop: 4,
+                      }}>
+                        {sport.label}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </>
+          ) : (
+            /* ── Pro Reel template picker step ── */
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 10 }}>
+                <button
+                  type="button"
+                  onClick={() => { setSetupStep('sport-picker'); setSelectedTemplate(null) }}
+                  style={backBtn}
+                >
+                  ← Back to sport picker
+                </button>
+                <h1 style={{ ...mainHeading, margin: 0 }}>Choose Your Reel Style</h1>
+              </div>
+              <p style={{ ...mainSubtitle, marginBottom: 28 }}>
+                Pick the vibe. Storyteller will match the pacing, cuts, and energy.
+              </p>
+
+              <div style={templateList}>
+                {PRO_REEL_TEMPLATES.map((tmpl) => {
+                  const isSel = selectedTemplate?.id === tmpl.id
+                  const isHov = hoveredTemplate === tmpl.id
+                  return (
+                    <button
+                      key={tmpl.id}
+                      type="button"
+                      onClick={() => setSelectedTemplate(tmpl)}
+                      onMouseEnter={() => setHoveredTemplate(tmpl.id)}
+                      onMouseLeave={() => setHoveredTemplate(null)}
+                      style={templateCard(tmpl.color, isSel, isHov)}
+                    >
+                      {/* Emoji */}
+                      <div style={{ fontSize: 40, lineHeight: 1, flexShrink: 0, width: 56, textAlign: 'center' }}>
+                        {tmpl.emoji}
+                      </div>
+
+                      {/* Text body */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                          <span style={templateName}>{tmpl.name}</span>
+                          <span style={templatePaceChip(tmpl.color)}>{tmpl.paceLabel}</span>
+                        </div>
+                        <div style={templateDesc}>{tmpl.description}</div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+                          {tmpl.vibe.split(' · ').map((tag) => (
+                            <span key={tag} style={templateVibeTag(tmpl.color, isSel)}>{tag}</span>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Selected check */}
+                      {isSel && (
+                        <div style={templateCheckBadge(tmpl.color)}>✓</div>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            </>
+          )}
         </div>
 
         {/* ── Right: Create panel (sticky sidebar) ── */}
@@ -345,13 +600,73 @@ export function ProjectSetupPage() {
             </div>
 
             {/* Submit */}
-            <button type="submit" style={createBtn}>
-              ✦ {isNew ? 'Create Story' : 'Save Story'}
+            <button
+              type="submit"
+              style={setupStep === 'sport-picker' || setupStep === 'highlight_template' ? sportsCreateBtn : createBtn}
+              disabled={
+                (setupStep === 'sport-picker' && !selectedSport) ||
+                (setupStep === 'highlight_template' && !selectedTemplate)
+              }
+            >
+              {setupStep === 'highlight_template'
+                ? '⚡ Start My Highlight Reel'
+                : setupStep === 'sport-picker'
+                  ? '→ Choose Your Style'
+                  : selectedIntent === 'sports_highlight' && isNew
+                    ? '→ Choose Your Sport'
+                    : `✦ ${isNew ? 'Create Story' : 'Save Story'}`}
             </button>
+
+            {/* Back hint when in sport picker or template picker */}
+            {setupStep === 'sport-picker' && (
+              <button
+                type="button"
+                onClick={() => { setSetupStep('type-picker'); setSelectedSport(null) }}
+                style={panelBackLink}
+              >
+                ← Back to story type
+              </button>
+            )}
+            {setupStep === 'highlight_template' && (
+              <button
+                type="button"
+                onClick={() => { setSetupStep('sport-picker'); setSelectedTemplate(null) }}
+                style={panelBackLink}
+              >
+                ← Back to sport picker
+              </button>
+            )}
+
+            {/* Selection summary for sports highlight flow */}
+            {setupStep === 'highlight_template' && (selectedSport || selectedTemplate) && (
+              <div style={selectionSummary}>
+                {selectedSport && (
+                  <div style={selectionRow}>
+                    <span style={selectionLabel}>Sport</span>
+                    <span style={selectionValue}>
+                      {SPORTS.find((s) => s.id === selectedSport)?.emoji}{' '}
+                      {SPORTS.find((s) => s.id === selectedSport)?.label}
+                    </span>
+                  </div>
+                )}
+                {selectedTemplate && (
+                  <div style={selectionRow}>
+                    <span style={selectionLabel}>Style</span>
+                    <span style={{ ...selectionValue, color: selectedTemplate.color }}>
+                      {selectedTemplate.emoji} {selectedTemplate.name}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Footer hint */}
             <p style={panelFooter}>
-              Storyteller will pre-configure your project with the best settings, AI tools, and workflow for your story.
+              {setupStep === 'highlight_template'
+                ? 'Select a reel style to unlock sport-specific pacing and AI direction.'
+                : setupStep === 'sport-picker'
+                  ? 'Select your sport to unlock sport-specific clip tagging and pacing.'
+                  : 'Storyteller will pre-configure your project with the best settings, AI tools, and workflow for your story.'}
             </p>
           </form>
         </aside>
@@ -641,4 +956,283 @@ const panelFooter: React.CSSProperties = {
   textAlign: 'center',
   lineHeight: 1.5,
   margin: '0 0 20px',
+}
+
+// ─── Sports hero card (spans full row) ────────────────────────────────────────
+
+function sportsHeroCard(selected: boolean, hovered: boolean): React.CSSProperties {
+  return {
+    position: 'relative',
+    gridColumn: '1 / -1',
+    height: 140,
+    borderRadius: 16,
+    background: selected
+      ? 'linear-gradient(135deg, rgba(14,165,233,0.92) 0%, rgba(2,132,199,0.75) 40%, rgba(8,47,73,0.9) 100%)'
+      : 'linear-gradient(135deg, rgba(14,165,233,0.82) 0%, rgba(2,132,199,0.6) 40%, rgba(8,47,73,0.8) 100%)',
+    border: selected
+      ? '2px solid #38bdf8'
+      : hovered
+        ? '2px solid rgba(56,189,248,0.5)'
+        : '2px solid rgba(14,165,233,0.25)',
+    boxShadow: selected
+      ? '0 0 0 1px rgba(56,189,248,0.3), 0 6px 28px rgba(14,165,233,0.35)'
+      : hovered
+        ? '0 4px 20px rgba(14,165,233,0.2)'
+        : 'none',
+    padding: '20px 24px',
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 20,
+    cursor: 'pointer',
+    textAlign: 'left',
+    transition: 'all 0.15s ease',
+    transform: hovered ? 'translateY(-2px)' : 'translateY(0)',
+    overflow: 'hidden',
+  }
+}
+
+const sportsCardTitle: React.CSSProperties = {
+  fontWeight: 800,
+  fontSize: 22,
+  color: '#fff',
+  marginBottom: 6,
+  lineHeight: 1.2,
+  letterSpacing: '-0.01em',
+}
+
+const sportsCardDesc: React.CSSProperties = {
+  fontSize: 13,
+  color: 'rgba(255,255,255,0.8)',
+  lineHeight: 1.5,
+  maxWidth: 520,
+}
+
+const sportsCheckBadge: React.CSSProperties = {
+  position: 'absolute',
+  top: 12,
+  right: 12,
+  width: 24,
+  height: 24,
+  borderRadius: '50%',
+  background: '#38bdf8',
+  color: '#082f49',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontSize: 13,
+  fontWeight: 800,
+}
+
+// ─── Sport picker grid ────────────────────────────────────────────────────────
+
+const sportGrid: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(4, 1fr)',
+  gap: 12,
+}
+
+function sportChip(selected: boolean, hovered: boolean): React.CSSProperties {
+  return {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    padding: '22px 12px 18px',
+    borderRadius: 14,
+    border: selected
+      ? '2px solid #38bdf8'
+      : hovered
+        ? '2px solid rgba(56,189,248,0.35)'
+        : '2px solid rgba(255,255,255,0.07)',
+    background: selected
+      ? 'rgba(14,165,233,0.15)'
+      : hovered
+        ? 'rgba(14,165,233,0.07)'
+        : 'rgba(255,255,255,0.03)',
+    boxShadow: selected
+      ? '0 0 0 1px rgba(56,189,248,0.2), 0 4px 18px rgba(14,165,233,0.25)'
+      : 'none',
+    cursor: 'pointer',
+    transition: 'all 0.15s ease',
+    transform: hovered && !selected ? 'translateY(-2px)' : 'translateY(0)',
+  }
+}
+
+// ─── Back button / panel back link ────────────────────────────────────────────
+
+const backBtn: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  padding: '7px 14px',
+  borderRadius: 8,
+  border: '1px solid rgba(255,255,255,0.12)',
+  background: 'rgba(255,255,255,0.05)',
+  color: '#9ca3af',
+  fontSize: 13,
+  fontWeight: 500,
+  cursor: 'pointer',
+  flexShrink: 0,
+  transition: 'all 0.15s ease',
+}
+
+const panelBackLink: React.CSSProperties = {
+  background: 'none',
+  border: 'none',
+  color: '#6b7280',
+  fontSize: 12,
+  cursor: 'pointer',
+  textAlign: 'center',
+  padding: '4px 0 8px',
+  transition: 'color 0.15s ease',
+}
+
+const sportsCreateBtn: React.CSSProperties = {
+  width: '100%',
+  padding: '14px',
+  borderRadius: 12,
+  border: 'none',
+  background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 50%, #082f49 100%)',
+  color: '#fff',
+  fontWeight: 700,
+  fontSize: 15,
+  cursor: 'pointer',
+  letterSpacing: '0.01em',
+  boxShadow: '0 4px 18px rgba(14,165,233,0.4)',
+  transition: 'all 0.15s ease',
+  marginBottom: 8,
+}
+
+// ─── Pro Reel template picker styles ─────────────────────────────────────────
+
+const templateList: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 12,
+}
+
+function templateCard(color: string, selected: boolean, hovered: boolean): React.CSSProperties {
+  return {
+    position: 'relative',
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 18,
+    padding: '20px 22px',
+    borderRadius: 16,
+    border: selected
+      ? `2px solid ${color}`
+      : hovered
+        ? `2px solid ${color}55`
+        : '2px solid rgba(255,255,255,0.07)',
+    background: selected
+      ? `${color}18`
+      : hovered
+        ? `${color}0d`
+        : 'rgba(255,255,255,0.025)',
+    boxShadow: selected
+      ? `0 0 0 1px ${color}33, 0 6px 24px ${color}28`
+      : hovered
+        ? `0 4px 16px ${color}18`
+        : 'none',
+    cursor: 'pointer',
+    textAlign: 'left',
+    transition: 'all 0.15s ease',
+    transform: hovered && !selected ? 'translateY(-2px)' : 'translateY(0)',
+  }
+}
+
+const templateName: React.CSSProperties = {
+  fontSize: 16,
+  fontWeight: 700,
+  color: '#fff',
+  letterSpacing: '-0.01em',
+}
+
+function templatePaceChip(color: string): React.CSSProperties {
+  return {
+    fontSize: 10,
+    fontWeight: 700,
+    letterSpacing: '0.06em',
+    textTransform: 'uppercase',
+    color,
+    background: `${color}22`,
+    border: `1px solid ${color}44`,
+    borderRadius: 6,
+    padding: '2px 8px',
+    flexShrink: 0,
+  }
+}
+
+const templateDesc: React.CSSProperties = {
+  fontSize: 13,
+  color: 'rgba(255,255,255,0.65)',
+  lineHeight: 1.5,
+}
+
+function templateVibeTag(color: string, selected: boolean): React.CSSProperties {
+  return {
+    fontSize: 11,
+    fontWeight: 600,
+    color: selected ? color : 'rgba(255,255,255,0.55)',
+    background: selected ? `${color}22` : 'rgba(255,255,255,0.05)',
+    border: `1px solid ${selected ? color + '44' : 'rgba(255,255,255,0.08)'}`,
+    borderRadius: 6,
+    padding: '3px 8px',
+    transition: 'all 0.15s ease',
+  }
+}
+
+function templateCheckBadge(color: string): React.CSSProperties {
+  return {
+    position: 'absolute',
+    top: 14,
+    right: 14,
+    width: 24,
+    height: 24,
+    borderRadius: '50%',
+    background: color,
+    color: '#fff',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: 13,
+    fontWeight: 800,
+    flexShrink: 0,
+  }
+}
+
+// ─── Right panel selection summary styles ─────────────────────────────────────
+
+const selectionSummary: React.CSSProperties = {
+  margin: '-4px 0 12px',
+  padding: '12px 14px',
+  borderRadius: 10,
+  background: 'rgba(14,165,233,0.06)',
+  border: '1px solid rgba(14,165,233,0.15)',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 6,
+}
+
+const selectionRow: React.CSSProperties = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  gap: 8,
+}
+
+const selectionLabel: React.CSSProperties = {
+  fontSize: 10,
+  fontWeight: 600,
+  color: '#6b7280',
+  textTransform: 'uppercase',
+  letterSpacing: '0.06em',
+}
+
+const selectionValue: React.CSSProperties = {
+  fontSize: 12,
+  fontWeight: 600,
+  color: '#38bdf8',
 }

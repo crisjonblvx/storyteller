@@ -92,6 +92,15 @@ export function getIntentColors(intent: StoryIntent | null | undefined): IntentC
         gradientFrom: '#0369a1',
         gradientTo: '#0c4a6e'
       }
+    case 'sports_highlight':
+      return {
+        gradient: 'linear-gradient(135deg, rgba(14,165,233,0.35) 0%, rgba(2,132,199,0.1) 50%, rgba(8,47,73,0.2) 100%)',
+        border: 'rgba(34,211,238,0.5)',
+        glow: 'rgba(14,165,233,0.35)',
+        text: '#38bdf8',
+        gradientFrom: '#0ea5e9',
+        gradientTo: '#082f49'
+      }
     default:
       return {
         gradient: 'linear-gradient(135deg, rgba(99,102,241,0.2) 0%, rgba(139,92,246,0.1) 100%)',

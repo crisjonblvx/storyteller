@@ -15,7 +15,8 @@ const mainBundleWorkspacePkgs = [
   '@storyteller/transcription',
   '@storyteller/shared',
   '@storyteller/timeline',
-  '@storyteller/analysis'
+  '@storyteller/analysis',
+  '@storyteller/audio'
 ]
 
 /**

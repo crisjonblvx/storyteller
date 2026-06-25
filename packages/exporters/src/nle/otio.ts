@@ -23,7 +23,8 @@ export function exportForOtio(input: NleExportInput): NleExportPackage {
     sequence: input.sequence,
     assets: input.assets,
     textOverlayRefs: input.textOverlayRefs,
-    targetNle: 'otio'
+    targetNle: 'otio',
+    soundDesign: input.soundDesign,
   })
 
   // Convert to OTIO format

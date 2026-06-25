@@ -26,7 +26,8 @@ FFmpeg scales and pads to the sequence dimensions; order and trims follow the ti
 |------|---------|
 | `timeline.fcpxml` | Main FCPXML sequence (FCP, Resolve import; Premiere can import FCPXML too). |
 | `timeline.xml` | Premiere XMEML (only when exporting for Premiere). |
-| `manifest.json` | Asset manifest: local paths, clips, markers, text overlay refs. |
+| `manifest.json` | Canonical asset manifest: local paths, clips, markers, text overlay refs. |
+| `export-summary.txt` | Included vs manifest-only counts — read this first. |
 | `README.txt` | Import steps, relink notes, and what each file is for. |
 
 Optional **Preview** buttons in the Exports tab still show excerpts; they are secondary to the on-disk package.

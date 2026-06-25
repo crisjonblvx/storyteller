@@ -1,5 +1,6 @@
 import type { TimelineSequence } from '@storyteller/timeline'
 import type { FcpxmlAssetProbe } from './fcpxml.js'
+import type { SfxNleTrackGroup } from '../nle/audio-director-nle.js'
 import { groupAssetsByNleBin } from '../nle/bin-names.js'
 
 function escapeXml(s: string): string {
@@ -208,10 +209,43 @@ function formatSmpteFromFrames(totalFrames: number, rate: XmemlRate): string {
  * This generator follows Premiere's xmeml variation: project wrapper, one master
  * `<file>` per source asset, source-native fps/raster, and `file://localhost` URLs.
  */
+function buildSfxAudioFileDefinition(params: {
+  fileId: string
+  displayName: string
+  pathUrl: string
+  rate: XmemlRate
+  durationFrames: number
+  indent: string
+}): string {
+  const { fileId, displayName, pathUrl, rate, durationFrames, indent } = params
+  return `${indent}<file id="${escapeXml(fileId)}">
+${indent}  <name>${escapeXml(displayName)}</name>
+${indent}  <pathurl>${escapeXml(pathUrl)}</pathurl>
+${rateXml(rate, `${indent}  `)}
+${indent}  <duration>${durationFrames}</duration>
+${indent}  <timecode>
+${rateXml(rate, `${indent}    `)}
+${indent}    <string>00;00;00;00</string>
+${indent}    <frame>0</frame>
+${indent}    <displayformat>NDF</displayformat>
+${indent}  </timecode>
+${indent}  <media>
+${indent}    <audio>
+${indent}      <samplecharacteristics>
+${indent}        <depth>16</depth>
+${indent}        <samplerate>48000</samplerate>
+${indent}      </samplecharacteristics>
+${indent}      <channelcount>2</channelcount>
+${indent}    </audio>
+${indent}  </media>
+${indent}</file>`
+}
+
 export function timelineToXmeml(
   sequence: TimelineSequence,
   assetPathsById: Record<string, string>,
-  assets: FcpxmlAssetProbe[] = []
+  assets: FcpxmlAssetProbe[] = [],
+  sfxGroups?: SfxNleTrackGroup[]
 ): string {
   let seqFps = sequence.format.fps
   let seqW = sequence.format.exportResolution.width
@@ -361,6 +395,92 @@ ${children.join('\n')}
       </bin>`)
   }
 
+  // Build SFX audio tracks for the <audio> section under <media>
+  let sfxAudioSection = ''
+  if (sfxGroups && sfxGroups.length > 0) {
+    const sfxFileIdByPath = new Map<string, string>()
+    const sfxFileDefsEmitted = new Set<string>()
+    let sfxFileNum = 1
+
+    const sfxTrackBlocks: string[] = []
+
+    for (const group of sfxGroups) {
+      const sfxClipItems: string[] = []
+
+      for (const clip of group.clips) {
+        const pathUrl = toPremierePathUrl(clip.localPath)
+
+        let fileId = sfxFileIdByPath.get(clip.localPath)
+        if (!fileId) {
+          fileId = `sfx-file-${sfxFileNum++}`
+          sfxFileIdByPath.set(clip.localPath, fileId)
+        }
+
+        const clipDurFrames = Math.max(1, secondsToFrames(clip.timelineOutSeconds - clip.timelineInSeconds, rate))
+        const startFrame = secondsToFrames(clip.timelineInSeconds, rate)
+        const endFrame = startFrame + clipDurFrames
+        const sourceOutFrames = Math.max(1, secondsToFrames(clip.sourceOutSeconds, rate))
+        const fileDurFrames = Math.max(sourceOutFrames + 1, clipDurFrames + 1)
+        const displayName = clip.localPath.split('/').pop() ?? 'sfx'
+
+        const fileRef = !sfxFileDefsEmitted.has(fileId)
+          ? (sfxFileDefsEmitted.add(fileId),
+            buildSfxAudioFileDefinition({
+              fileId,
+              displayName,
+              pathUrl,
+              rate,
+              durationFrames: fileDurFrames,
+              indent: '            ',
+            }))
+          : `            <file id="${escapeXml(fileId)}"/>`
+
+        sfxClipItems.push(`          <clipitem id="${escapeXml(clip.id)}">
+            <name>${escapeXml(clip.clipName)}</name>
+            <duration>${clipDurFrames}</duration>
+${rateXml(rate, '            ')}
+            <start>${startFrame}</start>
+            <end>${endFrame}</end>
+            <in>0</in>
+            <out>${sourceOutFrames}</out>
+${fileRef}
+            <filter>
+              <effect>
+                <name>Audio Levels</name>
+                <effectid>audiolevels</effectid>
+                <effectcategory>audiolevels</effectcategory>
+                <effecttype>audiolevelstype</effecttype>
+                <mediatype>audio</mediatype>
+                <parameter>
+                  <parameterid>level</parameterid>
+                  <name>Level</name>
+                  <valuemin>0</valuemin>
+                  <valuemax>3.98107</valuemax>
+                  <value>${clip.volume.toFixed(4)}</value>
+                </parameter>
+              </effect>
+            </filter>
+          </clipitem>`)
+      }
+
+      sfxTrackBlocks.push(`          <track>
+${sfxClipItems.join('\n') || '              <!-- no clips -->'}
+          </track>`)
+    }
+
+    sfxAudioSection = `
+          <audio>
+            <numOutputChannels>2</numOutputChannels>
+            <format>
+              <samplecharacteristics>
+                <depth>16</depth>
+                <samplerate>48000</samplerate>
+              </samplecharacteristics>
+            </format>
+${sfxTrackBlocks.join('\n')}
+          </audio>`
+  }
+
   return `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE xmeml>
 <xmeml version="5">
@@ -392,7 +512,7 @@ ${rateXml(rate, '                ')}
             <track>
 ${clipItems.join('\n') || '              <!-- no clips -->'}
             </track>
-          </video>
+          </video>${sfxAudioSection}
         </media>
       </sequence>
     </children>
