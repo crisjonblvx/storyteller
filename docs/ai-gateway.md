@@ -292,6 +292,30 @@ Without Supabase env vars, the gateway falls back to in-memory stores (dev only)
 
 `GET /health` reports `persistence: "supabase" | "memory"`.
 
+## Admin observability
+
+Password-protected operator dashboard (UI at `contentcreators.life/storyteller/admin`) backed by admin API routes on the gateway. Admin auth uses a **separate** short-lived JWT signed with `STORYTELLER_ADMIN_PASSWORD` — not Supabase user sessions.
+
+### Gateway env (server-only)
+
+```bash
+STORYTELLER_ADMIN_PASSWORD=   # or STORYTELLER_ADMIN_SECRET — never expose via VITE_*
+```
+
+### Admin routes
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `POST` | `/v1/admin/login` | `{ password }` body | Returns `{ token, expiresIn }` (12h JWT) |
+| `GET` | `/v1/admin/overview` | Admin bearer | MTD users, jobs, credits, estimated USD, breakdowns |
+| `GET` | `/v1/admin/users` | Admin bearer | User table with plan, balance, allowances, MTD spend |
+| `GET` | `/v1/admin/activity` | Admin bearer | Paginated cross-user job feed (`?limit=&offset=`) |
+| `GET` | `/v1/admin/users/:userId` | Admin bearer | User drill-down + recent jobs |
+
+USD estimates use rough COGS from [pricing.md](./pricing.md) — observability only, not billing.
+
+Beta user setup: see [admin-beta-setup.sql](./admin-beta-setup.sql).
+
 ## Policies
 
 - **No BYOK** for normal users (`ENABLE_BYOK=false`). Higgsfield key UI is hidden when the hosted gateway is enabled.

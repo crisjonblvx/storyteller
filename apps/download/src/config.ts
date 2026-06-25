@@ -1,14 +1,14 @@
 /** Shared download config — values come from Vercel env at build time. */
 export function downloadConfig() {
-  const owner = import.meta.env.VITE_GITHUB_OWNER || 'crisjonblvx'
-  const repo = import.meta.env.VITE_GITHUB_REPO || 'storyteller'
-  const version = import.meta.env.VITE_APP_VERSION || '1.0.0'
-  const productName = import.meta.env.VITE_PRODUCT_NAME || 'Storyteller'
+  const owner = (import.meta.env.VITE_GITHUB_OWNER || 'crisjonblvx').trim()
+  const repo = (import.meta.env.VITE_GITHUB_REPO || 'storyteller').trim()
+  const version = (import.meta.env.VITE_APP_VERSION || '1.0.0').trim()
+  const productName = (import.meta.env.VITE_PRODUCT_NAME || 'Storyteller').trim()
 
   const tag = version.startsWith('v') ? version : `v${version}`
 
   function asset(filename: string) {
-    return `https://github.com/${owner}/${repo}/releases/download/${tag}/${encodeURIComponent(filename)}`
+    return `https://github.com/${owner}/${repo}/releases/download/${tag}/${filename}`
   }
 
   return {

@@ -100,13 +100,11 @@ export class AdminService {
       .eq('status', 'succeeded')
       .gte('created_at', periodStart)
 
-    const byProvider = aggregateByField(
-      (breakdownRows ?? []) as Array<{ provider: string; intent: string; credits_reserved: number }>,
-      'provider'
+    const byProvider = aggregateByProvider(
+      (breakdownRows ?? []) as Array<{ provider: string; intent: string; credits_reserved: number }>
     )
-    const byIntent = aggregateByField(
-      (breakdownRows ?? []) as Array<{ provider: string; intent: string; credits_reserved: number }>,
-      'intent'
+    const byIntent = aggregateByIntent(
+      (breakdownRows ?? []) as Array<{ provider: string; intent: string; credits_reserved: number }>
     )
 
     const { count: jobsMtd } = await this.sb
@@ -278,28 +276,46 @@ function emptyOverview(periodStart: string): AdminOverview {
   }
 }
 
-function aggregateByField(
-  rows: Array<{ provider: string; intent: string; credits_reserved: number }>,
-  field: 'provider' | 'intent'
-): Array<{ provider?: string; intent?: string; jobs: number; credits: number; estimatedUsd: number }> {
-  const buckets = new Map<string, { jobs: number; credits: number; intents: string[] }>()
+function aggregateByProvider(
+  rows: Array<{ provider: string; intent: string; credits_reserved: number }>
+): AdminOverview['byProvider'] {
+  const buckets = new Map<string, { jobs: number; credits: number }>()
   for (const row of rows) {
-    const key = field === 'provider' ? row.provider : row.intent
-    const prev = buckets.get(key) ?? { jobs: 0, credits: 0, intents: [] }
+    const prev = buckets.get(row.provider) ?? { jobs: 0, credits: 0 }
     prev.jobs += 1
     prev.credits += row.credits_reserved
-    prev.intents.push(row.intent)
-    buckets.set(key, prev)
+    buckets.set(row.provider, prev)
   }
   return [...buckets.entries()]
-    .map(([key, val]) => {
-      const usd = rows
-        .filter((r) => (field === 'provider' ? r.provider : r.intent) === key)
+    .map(([provider, val]) => ({
+      provider,
+      jobs: val.jobs,
+      credits: val.credits,
+      estimatedUsd: rows
+        .filter((r) => r.provider === provider)
         .reduce((s, r) => s + estimateUsdForJob(r.intent, r.credits_reserved), 0)
-      if (field === 'provider') {
-        return { provider: key, jobs: val.jobs, credits: val.credits, estimatedUsd: usd }
-      }
-      return { intent: key, jobs: val.jobs, credits: val.credits, estimatedUsd: usd }
-    })
+    }))
+    .sort((a, b) => b.credits - a.credits)
+}
+
+function aggregateByIntent(
+  rows: Array<{ provider: string; intent: string; credits_reserved: number }>
+): AdminOverview['byIntent'] {
+  const buckets = new Map<string, { jobs: number; credits: number }>()
+  for (const row of rows) {
+    const prev = buckets.get(row.intent) ?? { jobs: 0, credits: 0 }
+    prev.jobs += 1
+    prev.credits += row.credits_reserved
+    buckets.set(row.intent, prev)
+  }
+  return [...buckets.entries()]
+    .map(([intent, val]) => ({
+      intent,
+      jobs: val.jobs,
+      credits: val.credits,
+      estimatedUsd: rows
+        .filter((r) => r.intent === intent)
+        .reduce((s, r) => s + estimateUsdForJob(r.intent, r.credits_reserved), 0)
+    }))
     .sort((a, b) => b.credits - a.credits)
 }
