@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
-import { IntroSplashScreen } from '@renderer/components/IntroSplashScreen'
 import { RouteErrorBoundary } from '@renderer/components/RouteErrorBoundary'
 import { useAuthStore } from '@renderer/stores/auth'
 import { LoginPage } from '@renderer/pages/LoginPage'
@@ -25,9 +24,6 @@ function Protected({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  const [showIntro, setShowIntro] = useState(() => {
-    return !localStorage.getItem('storyteller_intro_seen_v2')
-  })
   const init = useAuthStore((s) => s.init)
   useEffect(() => {
     void init()
@@ -35,10 +31,6 @@ export default function App() {
 
   return (
     <>
-      {showIntro && <IntroSplashScreen onComplete={() => {
-        localStorage.setItem('storyteller_intro_seen_v2', '1')
-        setShowIntro(false)
-      }} />}
       <RouteErrorBoundary>
       <Routes>
       <Route path="/login" element={<LoginPage />} />

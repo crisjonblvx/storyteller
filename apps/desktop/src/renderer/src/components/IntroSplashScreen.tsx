@@ -1,17 +1,26 @@
 import { useCallback, useState } from 'react'
-
-const INTRO_VIDEO_SRC = '/storyteller-intro-animation.mp4'
+import introVideoUrl from '@renderer/assets/storyteller-intro-animation.mp4'
 
 type Props = {
   onComplete: () => void
+  /** Called when the video fails to load — dismisses without marking as seen so it retries next launch. */
+  onErrorDismiss?: () => void
 }
 
-export function IntroSplashScreen({ onComplete }: Props) {
+export function IntroSplashScreen({ onComplete, onErrorDismiss }: Props) {
   const [skippable, setSkippable] = useState(false)
 
   const finish = useCallback(() => {
     onComplete()
   }, [onComplete])
+
+  const handleError = useCallback(() => {
+    if (onErrorDismiss) {
+      onErrorDismiss()
+    } else {
+      onComplete()
+    }
+  }, [onComplete, onErrorDismiss])
 
   return (
     <div
@@ -25,13 +34,13 @@ export function IntroSplashScreen({ onComplete }: Props) {
       }}
     >
       <video
-        src={INTRO_VIDEO_SRC}
+        src={introVideoUrl}
         autoPlay
         muted
         playsInline
         onCanPlay={() => setSkippable(true)}
         onEnded={finish}
-        onError={finish}
+        onError={handleError}
         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
       />
       {skippable && (

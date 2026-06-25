@@ -4,6 +4,7 @@ import type { StoryMode } from '@storyteller/shared'
 import { intentToMode } from '@storyteller/shared'
 import type { StoryIntent, PrimaryGoal } from '@storyteller/shared'
 import { useProjectWorkflow } from '@renderer/stores/project-workflow'
+import { IntroSplashScreen } from '@renderer/components/IntroSplashScreen'
 import storytellerLogo from '@renderer/assets/storyteller-logo.png'
 import brandIntroImg from '@renderer/assets/cards/brand-intro.png'
 import musicVideoImg from '@renderer/assets/cards/music-video.png'
@@ -122,6 +123,22 @@ export function ProjectSetupPage() {
   const projects = useProjectWorkflow((s) => s.projects)
   const createLocalProject = useProjectWorkflow((s) => s.createLocalProject)
   const updateProject = useProjectWorkflow((s) => s.updateProject)
+
+  const [showIntro, setShowIntro] = useState(() => {
+    return isNew && !localStorage.getItem('storyteller_intro_seen_v3')
+  })
+
+  if (showIntro) {
+    return (
+      <IntroSplashScreen
+        onComplete={() => {
+          localStorage.setItem('storyteller_intro_seen_v3', '1')
+          setShowIntro(false)
+        }}
+        onErrorDismiss={() => setShowIntro(false)}
+      />
+    )
+  }
 
   const existing = useMemo(
     () => (!isNew && projectId ? projects.find((p) => p.id === projectId) : undefined),
