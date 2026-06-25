@@ -68,11 +68,16 @@ export class ProxyStorytellerAiGateway implements StorytellerAiGateway {
       headers.Authorization = `Bearer ${this.cfg.proxyToken}`
     }
 
-    const res = await fetch(`${base}${capabilityPath('transcribe')}`, {
-      method: 'POST',
-      headers,
-      body: form
-    })
+    let res: Response
+    try {
+      res = await fetch(`${base}${capabilityPath('transcribe')}`, {
+        method: 'POST',
+        headers,
+        body: form
+      })
+    } catch (err) {
+      return { ok: false, error: `Storyteller AI gateway unreachable: ${err instanceof Error ? err.message : String(err)}` }
+    }
     const text = await res.text()
     if (!res.ok) {
       return { ok: false, error: `Transcribe proxy ${res.status}: ${text.slice(0, 500)}` }
@@ -94,11 +99,16 @@ export class ProxyStorytellerAiGateway implements StorytellerAiGateway {
   ): Promise<GenerateBrollPromptsResult> {
     onProgress?.({ phase: 'generating', detail: 'Requesting Storyteller API…' })
     const base = this.cfg.apiBaseUrl!
-    const res = await fetch(`${base}${capabilityPath('broll-prompts')}`, {
-      method: 'POST',
-      headers: this.headersJson(params.accessToken),
-      body: JSON.stringify(params)
-    })
+    let res: Response
+    try {
+      res = await fetch(`${base}${capabilityPath('broll-prompts')}`, {
+        method: 'POST',
+        headers: this.headersJson(params.accessToken),
+        body: JSON.stringify(params)
+      })
+    } catch (err) {
+      return { ok: false, error: `Storyteller AI gateway unreachable: ${err instanceof Error ? err.message : String(err)}` }
+    }
     const text = await res.text()
     let parsed: unknown
     try {
@@ -125,11 +135,16 @@ export class ProxyStorytellerAiGateway implements StorytellerAiGateway {
   ): Promise<GenerateBrollPromptsFromBeatsResult> {
     onProgress?.({ phase: 'generating', detail: 'Requesting Storyteller API…' })
     const base = this.cfg.apiBaseUrl!
-    const res = await fetch(`${base}${capabilityPath('broll-prompts-from-beats')}`, {
-      method: 'POST',
-      headers: this.headersJson(params.accessToken),
-      body: JSON.stringify(params)
-    })
+    let res: Response
+    try {
+      res = await fetch(`${base}${capabilityPath('broll-prompts-from-beats')}`, {
+        method: 'POST',
+        headers: this.headersJson(params.accessToken),
+        body: JSON.stringify(params)
+      })
+    } catch (err) {
+      return { ok: false, error: `Storyteller AI gateway unreachable: ${err instanceof Error ? err.message : String(err)}` }
+    }
     const text = await res.text()
     let parsed: unknown
     try {
@@ -150,11 +165,16 @@ export class ProxyStorytellerAiGateway implements StorytellerAiGateway {
     params: import('./types.js').GenerateBrollForSoundbiteParams
   ): Promise<import('./types.js').GenerateBrollForSoundbiteResult> {
     const base = this.cfg.apiBaseUrl!
-    const res = await fetch(`${base}${capabilityPath('broll-for-soundbite')}`, {
-      method: 'POST',
-      headers: this.headersJson(params.accessToken),
-      body: JSON.stringify(params)
-    })
+    let res: Response
+    try {
+      res = await fetch(`${base}${capabilityPath('broll-for-soundbite')}`, {
+        method: 'POST',
+        headers: this.headersJson(params.accessToken),
+        body: JSON.stringify(params)
+      })
+    } catch (err) {
+      return { ok: false, error: `Storyteller AI gateway unreachable: ${err instanceof Error ? err.message : String(err)}` }
+    }
     const text = await res.text()
     let parsed: unknown
     try {
@@ -175,11 +195,16 @@ export class ProxyStorytellerAiGateway implements StorytellerAiGateway {
     params: AnalyzeGroundedReviewParams
   ): Promise<AnalyzeGroundedReviewResult> {
     const base = this.cfg.apiBaseUrl!
-    const res = await fetch(`${base}${capabilityPath('grounded-review')}`, {
-      method: 'POST',
-      headers: this.headersJson(params.accessToken),
-      body: JSON.stringify(params)
-    })
+    let res: Response
+    try {
+      res = await fetch(`${base}${capabilityPath('grounded-review')}`, {
+        method: 'POST',
+        headers: this.headersJson(params.accessToken),
+        body: JSON.stringify(params)
+      })
+    } catch (err) {
+      return { ok: false, error: `Storyteller AI gateway unreachable: ${err instanceof Error ? err.message : String(err)}` }
+    }
     const text = await res.text()
     let parsed: unknown
     try {

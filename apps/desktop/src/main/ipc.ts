@@ -305,23 +305,32 @@ export function registerIpc(): void {
     if (!Array.isArray(p.candidates) || p.candidates.length === 0) {
       return { ok: false as const, error: 'Missing grounded candidates' }
     }
-    return getStorytellerAiGateway().analyzeGroundedReview({
-      candidates: p.candidates as AnalyzeGroundedReviewParams['candidates'],
-      segments: Array.isArray(p.segments) ? (p.segments as AnalyzeGroundedReviewParams['segments']) : undefined,
-      subjectProfile: (p.subjectProfile ?? {}) as AnalyzeGroundedReviewParams['subjectProfile'],
-      promptPack: p.promptPack as PromptPackDefinition,
-      directionText: typeof p.directionText === 'string' ? p.directionText : '',
-      mode: (p.mode ?? 'story') as StoryMode,
-      targetCount:
-        typeof p.targetCount === 'number' && Number.isFinite(p.targetCount) && p.targetCount > 0
-          ? p.targetCount
-          : undefined,
-      shotDurationSeconds:
-        typeof p.shotDurationSeconds === 'number' && Number.isFinite(p.shotDurationSeconds)
-          ? p.shotDurationSeconds
-          : undefined,
-      accessToken: typeof p.accessToken === 'string' ? p.accessToken : undefined
-    })
+    try {
+      const result = await getStorytellerAiGateway().analyzeGroundedReview({
+        candidates: p.candidates as AnalyzeGroundedReviewParams['candidates'],
+        segments: Array.isArray(p.segments) ? (p.segments as AnalyzeGroundedReviewParams['segments']) : undefined,
+        subjectProfile: (p.subjectProfile ?? {}) as AnalyzeGroundedReviewParams['subjectProfile'],
+        promptPack: p.promptPack as PromptPackDefinition,
+        directionText: typeof p.directionText === 'string' ? p.directionText : '',
+        mode: (p.mode ?? 'story') as StoryMode,
+        targetCount:
+          typeof p.targetCount === 'number' && Number.isFinite(p.targetCount) && p.targetCount > 0
+            ? p.targetCount
+            : undefined,
+        shotDurationSeconds:
+          typeof p.shotDurationSeconds === 'number' && Number.isFinite(p.shotDurationSeconds)
+            ? p.shotDurationSeconds
+            : undefined,
+        accessToken: typeof p.accessToken === 'string' ? p.accessToken : undefined
+      })
+      if (!result.ok) {
+        return { ok: false as const, error: sanitizeErrorMessage(result.error) }
+      }
+      return result
+    } catch (err) {
+      const raw = err instanceof Error ? err.message : String(err)
+      return { ok: false as const, error: sanitizeErrorMessage(raw) }
+    }
   })
 
   /**
