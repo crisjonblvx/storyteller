@@ -2,7 +2,8 @@ const { app, BrowserWindow, protocol } = await import('electron')
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import dotenv from 'dotenv'
-import { autoUpdater } from 'electron-updater'
+import electronUpdater from 'electron-updater'
+const { autoUpdater } = electronUpdater
 import { registerIpc } from './ipc.js'
 import { startEmbeddedGateway, stopEmbeddedGateway } from './embedded-gateway.js'
 import {
