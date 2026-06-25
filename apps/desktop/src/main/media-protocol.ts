@@ -66,6 +66,15 @@ export function registerMediaProtocolSchemes(): void {
         corsEnabled: true,
         bypassCSP: true
       }
+    },
+    {
+      scheme: 'storyteller',
+      privileges: {
+        standard: true,
+        secure: true,
+        supportFetchAPI: true,
+        corsEnabled: true
+      }
     }
   ])
 }

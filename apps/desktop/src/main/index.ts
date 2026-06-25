@@ -1,6 +1,7 @@
-const { app, BrowserWindow, protocol } = await import('electron')
+const { app, BrowserWindow, net, protocol } = await import('electron')
 import { dirname, join, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
+import { existsSync } from 'node:fs'
 import dotenv from 'dotenv'
 import electronUpdater from 'electron-updater'
 const { autoUpdater } = electronUpdater
@@ -125,15 +126,15 @@ app.on('before-quit', () => {
 
   registerMediaProtocolHandler()
 
-  protocol.handle('storyteller', async (request) => {
-    const path = request.url.slice('storyteller://'.length)
-    const response = await fetch(`http://localhost:5173/${path}`)
-    const data = await response.arrayBuffer()
-    return new Response(data, {
-      headers: response.headers,
-      status: response.status,
-      statusText: response.statusText
-    })
+  protocol.handle('storyteller', (request) => {
+    const rawPath = request.url.slice('storyteller://'.length)
+    // Strip query string and hash so we resolve the actual file path.
+    const urlPath = rawPath.split('?')[0].split('#')[0] || 'index.html'
+    const rendererRoot = join(__dirname, '../renderer')
+    const fullPath = join(rendererRoot, urlPath)
+    // SPA fallback: any path that isn't a real asset gets index.html.
+    const target = existsSync(fullPath) ? fullPath : join(rendererRoot, 'index.html')
+    return net.fetch(pathToFileURL(target).href)
   })
 
   // electron-vite injects ELECTRON_RENDERER_URL when running `electron-vite dev`.
