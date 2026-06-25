@@ -1,5 +1,5 @@
 const { app, BrowserWindow, net, protocol } = await import('electron')
-import { dirname, join, resolve } from 'node:path'
+import { dirname, extname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { existsSync } from 'node:fs'
 import dotenv from 'dotenv'
@@ -77,6 +77,28 @@ function safeConsole(
   }
 }
 
+const RENDERER_MIME_TYPES: Record<string, string> = {
+  '.html': 'text/html',
+  '.js':   'text/javascript',
+  '.mjs':  'text/javascript',
+  '.cjs':  'text/javascript',
+  '.css':  'text/css',
+  '.json': 'application/json',
+  '.png':  'image/png',
+  '.jpg':  'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif':  'image/gif',
+  '.svg':  'image/svg+xml',
+  '.ico':  'image/x-icon',
+  '.woff': 'font/woff',
+  '.woff2':'font/woff2',
+  '.ttf':  'font/ttf',
+  '.mp4':  'video/mp4',
+  '.webm': 'video/webm',
+  '.mp3':  'audio/mpeg',
+  '.wav':  'audio/wav',
+}
+
 /**
  * Load .env from the app dir and the repo root (monorepo convenience).
  * A bare `dotenv.config()` only reads from cwd, which varies by launcher —
@@ -126,15 +148,22 @@ app.on('before-quit', () => {
 
   registerMediaProtocolHandler()
 
-  protocol.handle('storyteller', (request) => {
-    const rawPath = request.url.slice('storyteller://'.length)
-    // Strip query string and hash so we resolve the actual file path.
-    const urlPath = rawPath.split('?')[0].split('#')[0] || 'index.html'
+  protocol.handle('storyteller', async (request) => {
+    const url = new URL(request.url)
+    // url.pathname cleanly extracts the path portion, stripping the host
+    // (e.g. 'storyteller://localhost/assets/foo.js' → '/assets/foo.js').
+    const urlPath = url.pathname === '/' ? '/index.html' : url.pathname
     const rendererRoot = join(__dirname, '../renderer')
     const fullPath = join(rendererRoot, urlPath)
     // SPA fallback: any path that isn't a real asset gets index.html.
-    const target = existsSync(fullPath) ? fullPath : join(rendererRoot, 'index.html')
-    return net.fetch(pathToFileURL(target).href)
+    const resolvedPath = existsSync(fullPath) ? fullPath : join(rendererRoot, 'index.html')
+    const ext = extname(resolvedPath)
+    const mimeType = RENDERER_MIME_TYPES[ext] ?? 'application/octet-stream'
+    const fileResponse = await net.fetch(pathToFileURL(resolvedPath).href)
+    return new Response(fileResponse.body, {
+      status: fileResponse.status,
+      headers: { 'Content-Type': mimeType }
+    })
   })
 
   // electron-vite injects ELECTRON_RENDERER_URL when running `electron-vite dev`.
@@ -172,7 +201,7 @@ app.on('before-quit', () => {
     mainWindow.loadURL(devServerUrl)
     mainWindow.webContents.openDevTools()
   } else {
-    mainWindow.loadURL('storyteller://index.html')
+    mainWindow.loadURL('storyteller://localhost/index.html')
   }
 
   app.on('window-all-closed', () => {
