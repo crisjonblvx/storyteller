@@ -1,0 +1,15 @@
+# Deploy the Storyteller AI Gateway on Railway.
+# 1. Connect this GitHub repo in Railway
+# 2. Set Dockerfile path: apps/ai-gateway/Dockerfile
+# 3. Add env vars from apps/ai-gateway/.env.example
+# 4. Add custom domain: storyteller-api.contentcreators.life
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "apps/ai-gateway/Dockerfile"
+
+[deploy]
+healthcheckPath = "/health"
+healthcheckTimeout = 120
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 5

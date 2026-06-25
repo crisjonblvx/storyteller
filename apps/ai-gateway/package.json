@@ -1,0 +1,30 @@
+{
+  "name": "@storyteller/ai-gateway-service",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "node --import tsx src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "TSX_TSCONFIG_PATH=./tsconfig.test.json node --import tsx --test --test-reporter=spec test/**/*.test.ts"
+  },
+  "dependencies": {
+    "@fastify/cors": "^11.0.0",
+    "@fastify/multipart": "^9.0.3",
+    "@runwayml/sdk": "^3.16.0",
+    "@storyteller/ai-gateway": "*",
+    "@storyteller/analysis": "*",
+    "@storyteller/shared": "*",
+    "@storyteller/transcription": "*",
+    "@supabase/supabase-js": "^2.49.1",
+    "dotenv": "^16.4.7",
+    "fastify": "^5.2.1",
+    "jose": "^6.0.10",
+    "stripe": "^22.2.2",
+    "tsx": "^4.19.3"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.2"
+  }
+}

@@ -1,0 +1,124 @@
+{
+  "name": "@storyteller/desktop",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "pack": "electron-vite build && electron-builder",
+    "pack:mac": "electron-vite build && electron-builder --mac",
+    "pack:win": "electron-vite build && electron-builder --win",
+    "pack:beta": "bash ../../scripts/pack-desktop.sh",
+    "lint": "eslint . --ext .ts,.tsx",
+    "preview": "electron-vite preview"
+  },
+  "dependencies": {
+    "@runwayml/sdk": "^3.16.0",
+    "@supabase/supabase-js": "^2.49.1",
+    "dotenv": "^16.4.7",
+    "electron-updater": "^6.8.9",
+    "ffmpeg-static": "^5.3.0",
+    "ffprobe-static": "^3.1.0",
+    "music-tempo": "^1.0.3"
+  },
+  "devDependencies": {
+    "@electron/notarize": "^2.5.0",
+    "@storyteller/ai-gateway": "*",
+    "@storyteller/analysis": "*",
+    "@storyteller/exporters": "*",
+    "@storyteller/media": "*",
+    "@storyteller/shared": "*",
+    "@storyteller/text-fx": "*",
+    "@storyteller/timeline": "*",
+    "@storyteller/transcription": "*",
+    "@tanstack/react-query": "^5.71.0",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "@vitejs/plugin-react": "^4.3.4",
+    "electron": "42.4.0",
+    "electron-builder": "^25.1.8",
+    "electron-vite": "^3.0.0",
+    "png-to-ico": "^3.0.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-router-dom": "^7.4.0",
+    "typescript": "^5.8.2",
+    "vite": "^6.2.1",
+    "zustand": "^5.0.3"
+  },
+  "build": {
+    "appId": "com.storyteller.desktop",
+    "productName": "Storyteller",
+    "copyright": "Copyright © 2026 Storyteller",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "out/**/*"
+    ],
+    "asar": true,
+    "asarUnpack": [
+      "**/node_modules/ffprobe-static/**",
+      "**/node_modules/ffmpeg-static/**"
+    ],
+    "afterSign": "build/notarize.mjs",
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ],
+      "category": "public.app-category.video",
+      "icon": "build/icon.icns",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "notarize": false
+    },
+    "dmg": {
+      "sign": false
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico",
+      "signingHashAlgorithms": [
+        "sha256"
+      ],
+      "certificateSubjectName": "Storyteller"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "build/icon.png",
+      "category": "Video"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "crisjonblvx",
+        "repo": "storyteller",
+        "releaseType": "release"
+      }
+    ]
+  }
+}

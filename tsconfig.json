@@ -1,0 +1,12 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./packages/shared" },
+    { "path": "./packages/timeline" },
+    { "path": "./packages/media" },
+    { "path": "./packages/analysis" },
+    { "path": "./packages/exporters" },
+    { "path": "./packages/text-fx" },
+    { "path": "./apps/desktop" }
+  ]
+}

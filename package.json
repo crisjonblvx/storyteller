@@ -1,0 +1,27 @@
+{
+  "name": "storyteller",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Storyteller v1 — AI-guided storytelling studio",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=@storyteller/desktop",
+    "build": "npm run build --workspace=@storyteller/desktop",
+    "lint": "npm run lint --workspace=@storyteller/desktop",
+    "typecheck": "npm run build --workspace=@storyteller/desktop",
+    "gateway:dev": "npm run dev --workspace=@storyteller/ai-gateway-service",
+    "gateway:typecheck": "npm run typecheck --workspace=@storyteller/ai-gateway-service",
+    "gateway:test": "npm run test --workspace=@storyteller/ai-gateway-service",
+    "ai-gateway:test": "npm run test --workspace=@storyteller/ai-gateway",
+    "test:gateway": "npm run gateway:test && npm run ai-gateway:test",
+    "download:dev": "npm run dev --workspace=@storyteller/download",
+    "download:build": "npm run build --workspace=@storyteller/download",
+    "pack:beta": "bash scripts/pack-desktop.sh"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

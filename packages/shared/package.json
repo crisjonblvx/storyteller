@@ -1,0 +1,16 @@
+{
+  "name": "@storyteller/shared",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "types": "./src/index.ts",
+  "scripts": {
+    "test": "node --import tsx --test --test-reporter=spec test/**/*.test.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.3"
+  }
+}
