@@ -43,11 +43,19 @@ export class StorytellerGatewayClient {
   }
 
   async generateMedia(request: GenerateMediaRequest): Promise<GenerateMediaResponse> {
-    const res = await fetch(`${this.opts.baseUrl}/v1/media/generate`, {
-      method: 'POST',
-      headers: this.authHeaders(),
-      body: JSON.stringify(request)
-    })
+    let res: Response
+    try {
+      res = await fetch(`${this.opts.baseUrl}/v1/media/generate`, {
+        method: 'POST',
+        headers: this.authHeaders(),
+        body: JSON.stringify(request)
+      })
+    } catch (err) {
+      throw new GatewayRequestError(
+        `Storyteller AI is unreachable: ${err instanceof Error ? err.message : String(err)}`,
+        'NETWORK_ERROR', 0
+      )
+    }
     const body = (await res.json()) as GenerateMediaResponse & { error?: string }
     if (!res.ok) {
       throw new Error(body?.message ?? (body as { error?: string }).error ?? `Generate failed (${res.status})`)
@@ -56,10 +64,18 @@ export class StorytellerGatewayClient {
   }
 
   async getJob(jobId: string): Promise<GenerationJobStatus> {
-    const res = await fetch(`${this.opts.baseUrl}/v1/media/jobs/${encodeURIComponent(jobId)}`, {
-      method: 'GET',
-      headers: this.authHeaders()
-    })
+    let res: Response
+    try {
+      res = await fetch(`${this.opts.baseUrl}/v1/media/jobs/${encodeURIComponent(jobId)}`, {
+        method: 'GET',
+        headers: this.authHeaders()
+      })
+    } catch (err) {
+      throw new GatewayRequestError(
+        `Storyteller AI is unreachable: ${err instanceof Error ? err.message : String(err)}`,
+        'NETWORK_ERROR', 0
+      )
+    }
     const body = (await res.json()) as GenerationJobStatus & { error?: string }
     if (!res.ok) {
       throw new Error(body?.error?.message ?? (body as { error?: string }).error ?? `Job fetch failed (${res.status})`)
@@ -68,10 +84,15 @@ export class StorytellerGatewayClient {
   }
 
   async cancelJob(jobId: string): Promise<void> {
-    const res = await fetch(
-      `${this.opts.baseUrl}/v1/media/jobs/${encodeURIComponent(jobId)}/cancel`,
-      { method: 'POST', headers: this.authHeaders() }
-    )
+    let res: Response
+    try {
+      res = await fetch(
+        `${this.opts.baseUrl}/v1/media/jobs/${encodeURIComponent(jobId)}/cancel`,
+        { method: 'POST', headers: this.authHeaders() }
+      )
+    } catch {
+      return
+    }
     if (!res.ok) {
       const text = await res.text()
       throw new Error(text.slice(0, 300) || `Cancel failed (${res.status})`)
@@ -85,11 +106,19 @@ export class StorytellerGatewayClient {
   async generateMediaCapability(
     request: GenerateMediaCapabilityRequest
   ): Promise<GenerateMediaCapabilityResponse> {
-    const res = await fetch(`${this.opts.baseUrl}/v1/capabilities/media-generate`, {
-      method: 'POST',
-      headers: this.authHeaders(),
-      body: JSON.stringify(request)
-    })
+    let res: Response
+    try {
+      res = await fetch(`${this.opts.baseUrl}/v1/capabilities/media-generate`, {
+        method: 'POST',
+        headers: this.authHeaders(),
+        body: JSON.stringify(request)
+      })
+    } catch (err) {
+      throw new GatewayRequestError(
+        `Storyteller AI is unreachable: ${err instanceof Error ? err.message : String(err)}`,
+        'NETWORK_ERROR', 0
+      )
+    }
     const body = (await res.json()) as GenerateMediaCapabilityResponse & GatewayErrorBody
     if (!res.ok) {
       throw parseGatewayErrorBody(res.status, body)
@@ -98,10 +127,18 @@ export class StorytellerGatewayClient {
   }
 
   async getAccount(): Promise<StorytellerAccountSummaryWire> {
-    const res = await fetch(`${this.opts.baseUrl}/v1/capabilities/account`, {
-      method: 'GET',
-      headers: this.authHeaders()
-    })
+    let res: Response
+    try {
+      res = await fetch(`${this.opts.baseUrl}/v1/capabilities/account`, {
+        method: 'GET',
+        headers: this.authHeaders()
+      })
+    } catch (err) {
+      throw new GatewayRequestError(
+        `Storyteller AI is unreachable: ${err instanceof Error ? err.message : String(err)}`,
+        'NETWORK_ERROR', 0
+      )
+    }
     const body = (await res.json()) as StorytellerAccountSummaryWire & GatewayErrorBody
     if (!res.ok) {
       throw parseGatewayErrorBody(res.status, body)
@@ -114,10 +151,18 @@ export class StorytellerGatewayClient {
     if (opts?.limit != null) params.set('limit', String(opts.limit))
     if (opts?.offset != null) params.set('offset', String(opts.offset))
     const qs = params.toString()
-    const res = await fetch(
-      `${this.opts.baseUrl}/v1/capabilities/account/usage${qs ? `?${qs}` : ''}`,
-      { method: 'GET', headers: this.authHeaders() }
-    )
+    let res: Response
+    try {
+      res = await fetch(
+        `${this.opts.baseUrl}/v1/capabilities/account/usage${qs ? `?${qs}` : ''}`,
+        { method: 'GET', headers: this.authHeaders() }
+      )
+    } catch (err) {
+      throw new GatewayRequestError(
+        `Storyteller AI is unreachable: ${err instanceof Error ? err.message : String(err)}`,
+        'NETWORK_ERROR', 0
+      )
+    }
     const body = (await res.json()) as StorytellerUsageHistory & GatewayErrorBody
     if (!res.ok) {
       throw parseGatewayErrorBody(res.status, body)
@@ -126,10 +171,18 @@ export class StorytellerGatewayClient {
   }
 
   async getMediaCapabilityJob(jobId: string): Promise<MediaCapabilityJobStatus> {
-    const res = await fetch(
-      `${this.opts.baseUrl}/v1/capabilities/media-jobs/${encodeURIComponent(jobId)}`,
-      { method: 'GET', headers: this.authHeaders() }
-    )
+    let res: Response
+    try {
+      res = await fetch(
+        `${this.opts.baseUrl}/v1/capabilities/media-jobs/${encodeURIComponent(jobId)}`,
+        { method: 'GET', headers: this.authHeaders() }
+      )
+    } catch (err) {
+      throw new GatewayRequestError(
+        `Storyteller AI is unreachable: ${err instanceof Error ? err.message : String(err)}`,
+        'NETWORK_ERROR', 0
+      )
+    }
     const body = (await res.json()) as MediaCapabilityJobStatus & { error?: string }
     if (!res.ok) {
       throw new Error(body?.error?.message ?? (body as { error?: string }).error ?? `Job fetch failed (${res.status})`)
@@ -138,10 +191,15 @@ export class StorytellerGatewayClient {
   }
 
   async cancelMediaCapabilityJob(jobId: string): Promise<void> {
-    const res = await fetch(
-      `${this.opts.baseUrl}/v1/capabilities/media-jobs/${encodeURIComponent(jobId)}/cancel`,
-      { method: 'POST', headers: this.authHeaders() }
-    )
+    let res: Response
+    try {
+      res = await fetch(
+        `${this.opts.baseUrl}/v1/capabilities/media-jobs/${encodeURIComponent(jobId)}/cancel`,
+        { method: 'POST', headers: this.authHeaders() }
+      )
+    } catch {
+      return
+    }
     if (!res.ok) {
       const text = await res.text()
       throw new Error(text.slice(0, 300) || `Cancel failed (${res.status})`)

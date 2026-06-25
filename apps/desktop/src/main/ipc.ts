@@ -59,11 +59,17 @@ function sanitizeErrorMessage(msg: string): string {
   s = s.replace(/see docs\/[^\s).]*/gi, '')
   // Strip file-system paths
   s = s.replace(/\/(?:Users|private|home|var|tmp|Applications)\/[^\s,;'"]+/g, '[path]')
+  // Raw network errors — replace before provider-name pass
+  s = s.replace(/\bfetch failed\b/gi, 'Storyteller AI could not connect. Check your internet connection and try again.')
+  s = s.replace(/\bStoryteller AI is unreachable:[^.]*\./gi, 'Storyteller AI could not connect. Check your internet connection and try again.')
   // Replace provider names with the product name
   s = s.replace(/\bWhisper\b/gi, 'Storyteller AI')
   s = s.replace(/\bOpenAI\b/gi, 'Storyteller AI')
   s = s.replace(/\bAnthropic\b/gi, 'Storyteller AI')
   s = s.replace(/\b(?:Claude|GPT-?\d*)\b/g, 'Storyteller AI')
+  s = s.replace(/\bIdeogram\b/gi, 'Storyteller AI')
+  s = s.replace(/\bDALL-?E\b/gi, 'Storyteller AI')
+  s = s.replace(/\bStability\s*AI\b/gi, 'Storyteller AI')
   return s.trim()
 }
 
@@ -747,25 +753,34 @@ export function registerIpc(): void {
       }
     }
     const outDir = join(app.getPath('userData'), 'generated-broll', p.projectId)
-    return generateMediaViaCapability({
-      projectId: p.projectId,
-      slotId: p.slotId,
-      capability,
-      creativeMode: (p.creativeMode as Parameters<typeof generateMediaViaCapability>[0]['creativeMode']) ?? undefined,
-      prompt: p.prompt,
-      negativePrompt: p.negativePrompt,
-      referenceImageUrl: p.referenceImageUrl,
-      durationSeconds: p.durationSeconds,
-      aspectRatio: p.aspectRatio,
-      quality: p.quality,
-      providerPreference: p.providerPreference,
-      accessToken: p.accessToken,
-      outputDir: outDir,
-      metadata: p.metadata,
-      onProgress: (msg) => {
-        event.sender.send('media:progress', msg)
+    try {
+      const result = await generateMediaViaCapability({
+        projectId: p.projectId,
+        slotId: p.slotId,
+        capability,
+        creativeMode: (p.creativeMode as Parameters<typeof generateMediaViaCapability>[0]['creativeMode']) ?? undefined,
+        prompt: p.prompt,
+        negativePrompt: p.negativePrompt,
+        referenceImageUrl: p.referenceImageUrl,
+        durationSeconds: p.durationSeconds,
+        aspectRatio: p.aspectRatio,
+        quality: p.quality,
+        providerPreference: p.providerPreference,
+        accessToken: p.accessToken,
+        outputDir: outDir,
+        metadata: p.metadata,
+        onProgress: (msg) => {
+          event.sender.send('media:progress', msg)
+        }
+      })
+      if (!result.ok) {
+        return { ok: false as const, error: sanitizeErrorMessage(result.error) }
       }
-    })
+      return result
+    } catch (err) {
+      const raw = err instanceof Error ? err.message : String(err)
+      return { ok: false as const, error: sanitizeErrorMessage(raw) }
+    }
   })
 
   ipcMain.handle('production:generateStill', async (event, payload: unknown) => {
@@ -797,18 +812,27 @@ export function registerIpc(): void {
       return { ok: false as const, error: 'Missing production package still prompt' }
     }
     const outDir = productionOutputDir(app.getPath('userData'), p.projectId)
-    return generateProductionStill({
-      projectId: p.projectId,
-      slotId: p.slotId,
-      productionPackage: pkg as import('@storyteller/shared').ProductionPackage,
-      aspectRatio: p.aspectRatio ?? '16:9',
-      accessToken: p.accessToken,
-      outputDir: outDir,
-      courtesyRegen: p.courtesyRegen,
-      onProgress: (msg) => {
-        event.sender.send('production:stillProgress', { slotId: p.slotId, ...msg })
+    try {
+      const result = await generateProductionStill({
+        projectId: p.projectId,
+        slotId: p.slotId,
+        productionPackage: pkg as import('@storyteller/shared').ProductionPackage,
+        aspectRatio: p.aspectRatio ?? '16:9',
+        accessToken: p.accessToken,
+        outputDir: outDir,
+        courtesyRegen: p.courtesyRegen,
+        onProgress: (msg) => {
+          event.sender.send('production:stillProgress', { slotId: p.slotId, ...msg })
+        }
+      })
+      if (!result.ok) {
+        return { ok: false as const, error: sanitizeErrorMessage(result.error) }
       }
-    })
+      return result
+    } catch (err) {
+      const raw = err instanceof Error ? err.message : String(err)
+      return { ok: false as const, error: sanitizeErrorMessage(raw) }
+    }
   })
 
   ipcMain.handle('production:saveUploadedStill', async (_event, payload: unknown) => {
@@ -874,21 +898,30 @@ export function registerIpc(): void {
       return { ok: false as const, error: 'Missing approved still path' }
     }
     const outDir = productionOutputDir(app.getPath('userData'), p.projectId)
-    return generateProductionVideo({
-      projectId: p.projectId,
-      slotId: p.slotId,
-      motionPrompt: p.motionPrompt,
-      stillLocalPath: p.stillLocalPath,
-      referenceImageUrl: p.referenceImageUrl ?? '',
-      durationSeconds: p.durationSeconds ?? 8,
-      aspectRatio: p.aspectRatio ?? '16:9',
-      accessToken: p.accessToken,
-      outputDir: outDir,
-      productionPackageId: p.productionPackageId,
-      onProgress: (msg) => {
-        event.sender.send('production:videoProgress', { slotId: p.slotId, ...msg })
+    try {
+      const result = await generateProductionVideo({
+        projectId: p.projectId,
+        slotId: p.slotId,
+        motionPrompt: p.motionPrompt,
+        stillLocalPath: p.stillLocalPath,
+        referenceImageUrl: p.referenceImageUrl ?? '',
+        durationSeconds: p.durationSeconds ?? 8,
+        aspectRatio: p.aspectRatio ?? '16:9',
+        accessToken: p.accessToken,
+        outputDir: outDir,
+        productionPackageId: p.productionPackageId,
+        onProgress: (msg) => {
+          event.sender.send('production:videoProgress', { slotId: p.slotId, ...msg })
+        }
+      })
+      if (!result.ok) {
+        return { ok: false as const, error: sanitizeErrorMessage(result.error) }
       }
-    })
+      return result
+    } catch (err) {
+      const raw = err instanceof Error ? err.message : String(err)
+      return { ok: false as const, error: sanitizeErrorMessage(raw) }
+    }
   })
 
   ipcMain.handle('gateway:getAccount', async (_event, payload: unknown) => {
