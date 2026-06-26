@@ -114,7 +114,11 @@ async function refineStillPromptViaGateway(params: {
 
   params.onProgress?.({ phase: 'generating', detail: 'Refining director prompt…', progress: 5 })
   const started = await params.client.generateMediaCapability(refineRequest)
-  const status = await pollCapabilityJob(params.client, started.jobId, params.onProgress, 'Refining prompt…')
+  const status = await pollCapabilityJob(params.client, started.jobId, params.onProgress, 'Refining prompt…', {
+    // Prompt refinement is a fast LLM call (~2-10 s); cap it well below the image budget.
+    timeoutMs: 90 * 1000,
+    timeoutMessage: 'Prompt refinement timed out. Please try again.'
+  })
   if (status.status !== 'succeeded' || !status.result?.url) {
     throw new Error(formatJobFailure(status.error))
   }
@@ -254,7 +258,11 @@ export async function generateMediaViaCapability(params: {
     const jobId = started.jobId
     onProgress?.({ phase: 'generating', detail: 'Generating image…', progress: 15 })
 
-    const status = await pollCapabilityJob(client, jobId, onProgress, 'Generating image…')
+    const status = await pollCapabilityJob(client, jobId, onProgress, 'Generating image…', {
+      timeoutMs: DEFAULT_JOB_TIMEOUT_MS,
+      timeoutMessage:
+        'Image generation timed out after 4 minutes. The server may be busy — please try again.'
+    })
     if (status.status === 'cancelled') {
       return { ok: false, error: 'Generation was cancelled.' }
     }
@@ -298,18 +306,30 @@ export async function generateMediaViaCapability(params: {
   }
 }
 
+// Default overall budget for a single capability job (image generation).
+// gpt-image-2 settles in ~90-120 s; 4 minutes leaves generous headroom while
+// still surfacing a stuck/queued gateway job as a clear, actionable error
+// instead of an indefinite spinner.
+const DEFAULT_JOB_TIMEOUT_MS = 4 * 60 * 1000
+
 async function pollCapabilityJob(
   client: StorytellerGatewayClient,
   jobId: string,
   onProgress?: (p: GatewayBrollProgress) => void,
-  progressDetail = 'Generating…'
+  progressDetail = 'Generating…',
+  options?: { timeoutMs?: number; timeoutMessage?: string }
 ): Promise<MediaCapabilityJobStatus> {
-  const deadline = Date.now() + 12 * 60 * 1000
+  const timeoutMs = options?.timeoutMs ?? DEFAULT_JOB_TIMEOUT_MS
+  const deadline = Date.now() + timeoutMs
   let status = await client.getMediaCapabilityJob(jobId)
   while (status.status === 'queued' || status.status === 'running') {
     if (Date.now() > deadline) {
       await client.cancelMediaCapabilityJob(jobId).catch(() => undefined)
-      throw new Error('Gateway generation timed out.')
+      const minutes = Math.round(timeoutMs / 60_000)
+      throw new Error(
+        options?.timeoutMessage ??
+          `Generation timed out after ${minutes} minute${minutes === 1 ? '' : 's'}. The server may be busy — please try again.`
+      )
     }
     onProgress?.({
       phase: 'generating',
