@@ -4,6 +4,7 @@ import type { StoryMode } from '@storyteller/shared'
 import { intentToMode } from '@storyteller/shared'
 import type { StoryIntent, PrimaryGoal, HighlightSettings } from '@storyteller/shared'
 import { useProjectWorkflow } from '@renderer/stores/project-workflow'
+import { useAppVersion } from '@renderer/hooks/useAppVersion'
 import storytellerLogo from '@renderer/assets/storyteller-logo.png'
 import brandIntroImg from '@renderer/assets/cards/brand-intro.png'
 import musicVideoImg from '@renderer/assets/cards/music-video.png'
@@ -225,6 +226,7 @@ export function ProjectSetupPage() {
   const projects = useProjectWorkflow((s) => s.projects)
   const createLocalProject = useProjectWorkflow((s) => s.createLocalProject)
   const updateProject = useProjectWorkflow((s) => s.updateProject)
+  const appVersion = useAppVersion()
 
   const existing = useMemo(
     () => (!isNew && projectId ? projects.find((p) => p.id === projectId) : undefined),
@@ -333,6 +335,11 @@ export function ProjectSetupPage() {
         <Link to="/projects" style={myProjectsBtn}>
           📁 My Projects
         </Link>
+        {appVersion && (
+          <span style={{ marginLeft: 'auto', fontSize: 12, color: '#71717a', whiteSpace: 'nowrap' }}>
+            Storyteller {appVersion}
+          </span>
+        )}
       </header>
 
       {/* Body: left + right flex row */}

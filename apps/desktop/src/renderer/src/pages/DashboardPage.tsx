@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useProjectWorkflow, type LocalProject } from '@renderer/stores/project-workflow'
 import { useAuthStore } from '@renderer/stores/auth'
+import { useAppVersion } from '@renderer/hooks/useAppVersion'
 import storytellerLogo from '@renderer/assets/storyteller-logo.png'
 
 // ─── Intent-aware display helpers ───────────────────────────────────────────
@@ -89,6 +90,7 @@ export function DashboardPage() {
   const deleteProject = useProjectWorkflow((s) => s.deleteProject)
   const [renamingId, setRenamingId] = useState<string | null>(null)
   const [renameValue, setRenameValue] = useState('')
+  const appVersion = useAppVersion()
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -152,6 +154,11 @@ export function DashboardPage() {
         >
           Sign Out
         </button>
+        {appVersion && (
+          <span style={{ fontSize: 12, color: '#71717a', whiteSpace: 'nowrap' }}>
+            Storyteller {appVersion}
+          </span>
+        )}
         </div>
       </header>
 

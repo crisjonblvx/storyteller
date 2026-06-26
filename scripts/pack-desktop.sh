@@ -6,7 +6,7 @@ DESKTOP="$ROOT/apps/desktop"
 
 GITHUB_OWNER="${GITHUB_OWNER:-crisjonblvx}"
 GITHUB_REPO="${GITHUB_REPO:-storyteller}"
-APP_VERSION="${APP_VERSION:-1.0.1}"
+APP_VERSION="${APP_VERSION:-$(node -p "require('./apps/desktop/package.json').version" 2>/dev/null || echo '1.0.1')}"
 STORYTELLER_BUILD_SHA="${STORYTELLER_BUILD_SHA:-$(git rev-parse --short HEAD 2>/dev/null || true)}"
 export STORYTELLER_BUILD_SHA
 

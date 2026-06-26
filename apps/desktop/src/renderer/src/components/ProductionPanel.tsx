@@ -19,7 +19,7 @@ import { ExpandableImagePreview } from '@renderer/components/ExpandableImagePrev
 import { InlineClipPlayer } from '@renderer/components/InlineClipPlayer'
 import { getSignedAssetUrl, uploadReferenceImageToStorage } from '@renderer/lib/storage-assets'
 import { getGatewayAccessToken } from '@renderer/lib/gateway-auth'
-import { normalizeGatewayErrorForDisplay } from '@renderer/lib/display-errors'
+import { normalizeGatewayErrorForDisplay, isAuthGatewayError } from '@renderer/lib/display-errors'
 import {
   attachProductionVideo,
   findBrollSlotForSoundbite,
@@ -354,6 +354,14 @@ export function ProductionPanel(props: ProductionPanelProps) {
       })
       if (!res.ok) {
         const errorMessage = normalizeGatewayErrorForDisplay(res.error)
+        // Auth errors are transient — don't write them to the on-disk sequence.
+        // Persisting "Sign in to Storyteller…" causes it to re-appear on every
+        // project open, even after the user has signed in. Show it ephemerally
+        // instead so only the current session sees it.
+        if (isAuthGatewayError(res.error)) {
+          props.onError('Sign in to Storyteller to use AI features.')
+          return
+        }
         const failSeq = patchProductionSlotMetadata(baseSeq, slotRow.id, {
           status: 'failed',
           errorMessage
@@ -571,6 +579,10 @@ export function ProductionPanel(props: ProductionPanelProps) {
         accessToken: accessToken ?? undefined
       })
       if (!res.ok) {
+        if (isAuthGatewayError(res.error)) {
+          props.onError('Sign in to Storyteller to use AI features.')
+          return
+        }
         const errorMessage = normalizeGatewayErrorForDisplay(res.error)
         await props.onPersistSequence(
           patchProductionSlotMetadata(baseSeq, slot.id, {

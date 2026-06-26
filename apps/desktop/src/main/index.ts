@@ -111,12 +111,14 @@ dotenv.config({ path: resolve(__dirname, '../../../../.env') })
 dotenv.config()
 
 /**
- * In packaged builds, fall back to the production AI gateway if no explicit URL
- * is configured. Replace this URL once you have deployed `apps/ai-gateway`.
- * Developers override this via STORYTELLER_GATEWAY_URL in their local .env.
+ * Packaged builds always connect to the hosted production gateway — no local
+ * .env file is present in the bundle, and we must not let a developer's shell
+ * STORYTELLER_GATEWAY_URL (e.g. http://localhost:8787) leak into a shipped DMG.
+ * The dev server uses the .env value loaded above via dotenv; packaged builds
+ * ignore it unconditionally.
  */
 const PRODUCTION_GATEWAY_URL = 'https://storyteller-api.contentcreators.life'
-if (app.isPackaged && !process.env.STORYTELLER_GATEWAY_URL?.trim()) {
+if (app.isPackaged) {
   process.env.STORYTELLER_GATEWAY_URL = PRODUCTION_GATEWAY_URL
 }
 

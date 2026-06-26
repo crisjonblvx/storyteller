@@ -9,6 +9,7 @@ import {
   useAssetLibrary,
   type AssetWithProject
 } from '@renderer/hooks/useAssetLibrary'
+import { useAppVersion } from '@renderer/hooks/useAppVersion'
 import { assetThumbnailUrl } from '@renderer/lib/thumbnail-backfill'
 
 const ASSET_TYPES: Array<{ id: AssetType | 'all'; label: string }> = [
@@ -127,6 +128,7 @@ export function AssetLibraryPage() {
   const [role, setRole] = useState<string | 'all'>('all')
   const [search, setSearch] = useState('')
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const appVersion = useAppVersion()
 
   const filters = useMemo(
     () => ({ assetType, projectId, role, search: search.trim() || undefined }),
@@ -152,13 +154,18 @@ export function AssetLibraryPage() {
           <img src={storytellerLogo} alt="Storyteller" style={{ height: 48, display: 'block' }} />
         </Link>
         <h1 style={pageTitle}>Asset Library</h1>
-        <div style={{ display: 'flex', gap: 12 }}>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
           <Link to="/projects" style={navBtn}>
             Projects
           </Link>
           <Link to="/" style={navBtnPrimary}>
             New Story
           </Link>
+          {appVersion && (
+            <span style={{ fontSize: 12, color: '#71717a', whiteSpace: 'nowrap' }}>
+              Storyteller {appVersion}
+            </span>
+          )}
         </div>
       </header>
 

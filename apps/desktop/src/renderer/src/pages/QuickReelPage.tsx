@@ -6,6 +6,7 @@ import { buildIntroSequence } from '@storyteller/timeline'
 import type { TimelineSequence } from '@storyteller/timeline'
 import { useAuthStore } from '@renderer/stores/auth'
 import { useProjectWorkflow } from '@renderer/stores/project-workflow'
+import { useAppVersion } from '@renderer/hooks/useAppVersion'
 import { useLocalAssetsStore } from '@renderer/stores/local-assets'
 import {
   type QuickMoment,
@@ -60,6 +61,7 @@ export function QuickReelPage() {
   const createLocalProject = useProjectWorkflow((s) => s.createLocalProject)
   const updateProject = useProjectWorkflow((s) => s.updateProject)
   const addLocalAssets = useLocalAssetsStore((s) => s.addAssets)
+  const appVersion = useAppVersion()
 
   const [step, setStep] = useState<StepId>('story')
   const [inputMode, setInputMode] = useState<StoryInputMode>('upload')
@@ -544,6 +546,11 @@ export function QuickReelPage() {
           <span style={brandWord}>Storyteller.</span>
         </Link>
         <div style={topActions}>
+          {appVersion && (
+            <span style={{ fontSize: 12, color: '#71717a', whiteSpace: 'nowrap', marginRight: 8 }}>
+              Storyteller {appVersion}
+            </span>
+          )}
           {/* "Make a Reel in 60 Seconds" button hidden
           <button
             type="button"

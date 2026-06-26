@@ -85,6 +85,7 @@ import { getProjectFormat, isTemplateBrollIdea, isTemplateBrollPrompt, pickRecom
 import type { ProductionPackage } from '@storyteller/shared'
 import { useProjectWorkflow, type PromptPackSelection } from '@renderer/stores/project-workflow'
 import { useAuthStore } from '@renderer/stores/auth'
+import { useAppVersion } from '@renderer/hooks/useAppVersion'
 import { supabase, supabaseConfigured } from '@renderer/lib/supabase'
 import { getGatewayAccessToken } from '@renderer/lib/gateway-auth'
 import { normalizeGatewayErrorForDisplay } from '@renderer/lib/display-errors'
@@ -860,6 +861,7 @@ export function ProjectWorkspacePage() {
   const project = useMemo(() => projects.find((p) => p.id === projectId), [projects, projectId])
   const intentColors = getIntentColors(project?.intent)
   const updateProject = useProjectWorkflow((s) => s.updateProject)
+  const appVersion = useAppVersion()
   const setTimeline = useLocalTimelineStore((s) => s.setTimeline)
   const saveHighlightSettingsDebounced = useMemo(
     () =>
@@ -4979,6 +4981,11 @@ export function ProjectWorkspacePage() {
               </button>
             </div>
             <span style={badge}>{project.status.replace('_', ' ')}</span>
+            {appVersion && (
+              <span style={{ fontSize: 12, color: '#71717a', whiteSpace: 'nowrap' }}>
+                Storyteller {appVersion}
+              </span>
+            )}
             <button
               type="button"
               onClick={async () => { await signOut(); navigate('/login') }}
