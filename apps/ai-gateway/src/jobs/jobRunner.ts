@@ -24,7 +24,13 @@ export class JobRunner {
   start(jobId: string, provider: MediaProvider, providerJobId: string): void {
     if (this.active.has(jobId)) return
     this.active.add(jobId)
-    void this.loop(jobId, provider, providerJobId)
+    void this.loop(jobId, provider, providerJobId).catch((err) => {
+      log.error('job_loop_uncaught', {
+        jobId,
+        provider: provider.name,
+        error: err instanceof Error ? err.message : String(err)
+      })
+    })
   }
 
   private async loop(jobId: string, provider: MediaProvider, providerJobId: string): Promise<void> {

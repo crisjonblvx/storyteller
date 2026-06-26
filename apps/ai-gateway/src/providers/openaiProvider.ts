@@ -6,6 +6,19 @@ import type { MediaProvider } from './providerTypes.js'
 
 const OPENAI_API = 'https://api.openai.com/v1'
 
+/**
+ * In-memory state for async image generation tasks.
+ * `submit()` fires the OpenAI call in the background and stores the result here;
+ * `poll()` reads back the settled state without blocking the HTTP request handler.
+ */
+interface ImageTaskState {
+  done: boolean
+  url?: string
+  error?: string
+  startedAt: number
+}
+const pendingImages = new Map<string, ImageTaskState>()
+
 export function createOpenAiProvider(env: GatewayEnv): MediaProvider {
   const apiKey = env.openaiApiKey
 
@@ -17,11 +30,23 @@ export function createOpenAiProvider(env: GatewayEnv): MediaProvider {
         throw new GatewayError('OpenAI is not configured on the gateway.', 'PROVIDER_UNAVAILABLE', 503)
       }
       if (request.intent === 'prompt_refine') {
+        // LLM refinement is fast (~2-10 s) — keep synchronous so the route handler
+        // returns the completed result immediately without a separate poll cycle.
         const refined = await refinePrompt(apiKey, request)
         return { providerJobId: `openai-refine:${jobId}:${encodeURIComponent(refined.slice(0, 200))}` }
       }
-      const image = await generateImage(apiKey, request)
-      return { providerJobId: `openai-image:${jobId}:${image.url}` }
+      // Image generation with gpt-image-2 takes ~90-120 s. Running it synchronously
+      // inside the route handler would block the HTTP request for that entire time —
+      // the gateway POST would never return and the client would perceive a hang.
+      // Fire the API call in the background and return a placeholder providerJobId
+      // immediately; poll() below will pick up the result once it settles.
+      const state: ImageTaskState = { done: false, startedAt: Date.now() }
+      pendingImages.set(jobId, state)
+      generateImage(apiKey, request).then(
+        (result) => { state.done = true; state.url = result.url },
+        (err: unknown) => { state.done = true; state.error = err instanceof Error ? err.message : String(err) }
+      )
+      return { providerJobId: `openai-image-async:${jobId}` }
     },
     async poll(providerJobId, request) {
       if (providerJobId.startsWith('openai-refine:')) {
@@ -36,6 +61,35 @@ export function createOpenAiProvider(env: GatewayEnv): MediaProvider {
           }
         }
       }
+      if (providerJobId.startsWith('openai-image-async:')) {
+        const pendingJobId = providerJobId.slice('openai-image-async:'.length)
+        const state = pendingImages.get(pendingJobId)
+        if (!state) {
+          // Node process restarted and the in-memory task was lost.
+          return {
+            status: 'failed' as const,
+            errorCode: 'TASK_LOST',
+            errorMessage: 'Image generation task was lost (server restart). Please try again.'
+          }
+        }
+        if (!state.done) {
+          // Still generating — return an estimated progress so the client sees movement.
+          const elapsed = Date.now() - state.startedAt
+          const progress = Math.min(10 + Math.floor((elapsed / 150_000) * 78), 88)
+          return { status: 'running' as const, progress }
+        }
+        // Task settled — clean up and report outcome.
+        pendingImages.delete(pendingJobId)
+        if (state.error) {
+          return { status: 'failed' as const, errorCode: 'PROVIDER_ERROR', errorMessage: state.error }
+        }
+        return {
+          status: 'succeeded' as const,
+          progress: 100,
+          result: buildImageResult(state.url!, request)
+        }
+      }
+      // Legacy: openai-image:jobId:url (kept for any jobs that were in-flight during deploy).
       const url = providerJobId.replace(/^openai-image:[^:]+:/, '')
       return {
         status: 'succeeded',
@@ -81,7 +135,8 @@ async function refinePrompt(apiKey: string, request: GenerateMediaRequest): Prom
         }
       ],
       temperature: 0.7
-    })
+    }),
+    signal: AbortSignal.timeout(60_000)
   })
   if (!res.ok) {
     const err = await res.text()
@@ -113,7 +168,9 @@ async function generateImage(apiKey: string, request: GenerateMediaRequest): Pro
       prompt: request.prompt.trim().slice(0, 4000),
       size,
       n: 1
-    })
+    }),
+    // gpt-image-2 can take up to ~120 s; allow 180 s before declaring a timeout.
+    signal: AbortSignal.timeout(180_000)
   })
   if (!res.ok) {
     const err = await res.text()

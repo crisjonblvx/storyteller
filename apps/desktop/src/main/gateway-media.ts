@@ -114,7 +114,7 @@ async function refineStillPromptViaGateway(params: {
 
   params.onProgress?.({ phase: 'generating', detail: 'Refining director prompt…', progress: 5 })
   const started = await params.client.generateMediaCapability(refineRequest)
-  const status = await pollCapabilityJob(params.client, started.jobId, params.onProgress)
+  const status = await pollCapabilityJob(params.client, started.jobId, params.onProgress, 'Refining prompt…')
   if (status.status !== 'succeeded' || !status.result?.url) {
     throw new Error(formatJobFailure(status.error))
   }
@@ -218,6 +218,8 @@ export async function generateMediaViaCapability(params: {
         courtesyRegen: params.courtesyRegen,
         onProgress
       })
+      // Refinement phase is complete — signal image generation is about to start.
+      onProgress?.({ phase: 'generating', detail: 'Generating image…', progress: 15 })
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e)
       onProgress?.({ phase: 'failed', error: msg })
@@ -250,9 +252,9 @@ export async function generateMediaViaCapability(params: {
     onProgress?.({ phase: 'queued', detail: 'Submitting to Storyteller AI…' })
     const started = await client.generateMediaCapability(request)
     const jobId = started.jobId
-    onProgress?.({ phase: 'generating', detail: 'Generating…', progress: 10 })
+    onProgress?.({ phase: 'generating', detail: 'Generating image…', progress: 15 })
 
-    const status = await pollCapabilityJob(client, jobId, onProgress)
+    const status = await pollCapabilityJob(client, jobId, onProgress, 'Generating image…')
     if (status.status === 'cancelled') {
       return { ok: false, error: 'Generation was cancelled.' }
     }
@@ -299,7 +301,8 @@ export async function generateMediaViaCapability(params: {
 async function pollCapabilityJob(
   client: StorytellerGatewayClient,
   jobId: string,
-  onProgress?: (p: GatewayBrollProgress) => void
+  onProgress?: (p: GatewayBrollProgress) => void,
+  progressDetail = 'Generating…'
 ): Promise<MediaCapabilityJobStatus> {
   const deadline = Date.now() + 12 * 60 * 1000
   let status = await client.getMediaCapabilityJob(jobId)
@@ -310,7 +313,7 @@ async function pollCapabilityJob(
     }
     onProgress?.({
       phase: 'generating',
-      detail: 'Generating…',
+      detail: progressDetail,
       progress: status.progress ?? 30
     })
     await sleep(4000)

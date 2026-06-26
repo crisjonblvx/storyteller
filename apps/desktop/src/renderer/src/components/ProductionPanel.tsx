@@ -244,6 +244,31 @@ export function ProductionPanel(props: ProductionPanelProps) {
     }
   }, [activePkg, isEditingPrompts])
 
+  // Listen for still-generation progress events from the main process and update
+  // statusLine so the user sees "Refining prompt…" → "Generating image… (X%)" → etc.
+  useEffect(() => {
+    if (!isBusy) return
+    const bridge = window.storyteller
+    if (!bridge?.onProductionStillProgress) return
+    const currentSlotId = slot?.id
+    const unsub = bridge.onProductionStillProgress((p) => {
+      // Ignore events for other slots.
+      if (currentSlotId && p.slotId && p.slotId !== currentSlotId) return
+      if (p.phase !== 'still') return
+      const { detail, progress } = p
+      if (!detail) return
+      const pct = progress != null && progress > 0 ? ` (${progress}%)` : ''
+      if (/refin/i.test(detail)) {
+        setStatusLine('Refining prompt…')
+      } else if (/generat/i.test(detail)) {
+        setStatusLine(`Generating image…${pct}`)
+      } else if (/download/i.test(detail)) {
+        setStatusLine('Downloading image…')
+      }
+    })
+    return unsub
+  }, [isBusy, slot?.id])
+
   function cycleOffer(): void {
     if (offers.length <= 1) return
     const idx = offers.findIndex((o) => o.id === activePackageId)
