@@ -88,7 +88,15 @@ type StorytellerMediaCapabilityName =
 
 type AppStatus = {
   ok: true
-  app: { platform: string; electron: string; node: string; isPackaged: boolean }
+  app: {
+    version: string
+    buildSha: string | null
+    buildLabel: string
+    platform: string
+    electron: string
+    node: string
+    isPackaged: boolean
+  }
   ai: {
     mode: string
     openaiConfigured: boolean

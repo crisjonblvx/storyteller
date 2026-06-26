@@ -59,6 +59,7 @@ function isGatewayConnectionError(msg: string): boolean {
     /\bfetch failed\b/i.test(msg) ||
     /\bStoryteller AI is unreachable:/i.test(msg) ||
     /\bStoryteller AI could not connect\b/i.test(msg) ||
+    /\bCheck your internet connection and try again\b/i.test(msg) ||
     /\bECONNREFUSED\b/i.test(msg) ||
     /\bENOTFOUND\b/i.test(msg) ||
     /\bETIMEDOUT\b/i.test(msg)
@@ -111,6 +112,11 @@ function sanitizeErrorMessage(msg: string): string {
   return s.trim()
 }
 
+function sanitizeProgressPayload<T extends { error?: string }>(msg: T): T {
+  if (typeof msg.error !== 'string') return msg
+  return { ...msg, error: sanitizeErrorMessage(msg.error) }
+}
+
 export function registerIpc(): void {
   ipcMain.removeHandler('app:status')
   ipcMain.removeHandler('media:probe')
@@ -156,9 +162,13 @@ export function registerIpc(): void {
     const mediaGateway = isMediaGatewayEnabled()
     const cfg = resolveAiGatewayConfig(process.env)
     const gatewayPing = gatewayUrl ? await pingGatewayHealth(gatewayUrl) : { gatewayReachable: false }
+    const buildSha = process.env.STORYTELLER_BUILD_SHA?.trim() || null
     return {
       ok: true as const,
       app: {
+        version: app.getVersion(),
+        buildSha,
+        buildLabel: buildSha ? `${app.getVersion()} (${buildSha})` : app.getVersion(),
         platform: process.platform,
         electron: process.versions.electron,
         node: process.versions.node,
@@ -824,7 +834,7 @@ export function registerIpc(): void {
         outputDir: outDir,
         metadata: p.metadata,
         onProgress: (msg) => {
-          event.sender.send('media:progress', msg)
+          event.sender.send('media:progress', sanitizeProgressPayload(msg))
         }
       })
       if (!result.ok) {
@@ -876,7 +886,10 @@ export function registerIpc(): void {
         outputDir: outDir,
         courtesyRegen: p.courtesyRegen,
         onProgress: (msg) => {
-          event.sender.send('production:stillProgress', { slotId: p.slotId, ...msg })
+          event.sender.send(
+            'production:stillProgress',
+            sanitizeProgressPayload({ slotId: p.slotId, ...msg })
+          )
         }
       })
       if (!result.ok) {
@@ -965,7 +978,10 @@ export function registerIpc(): void {
         outputDir: outDir,
         productionPackageId: p.productionPackageId,
         onProgress: (msg) => {
-          event.sender.send('production:videoProgress', { slotId: p.slotId, ...msg })
+          event.sender.send(
+            'production:videoProgress',
+            sanitizeProgressPayload({ slotId: p.slotId, ...msg })
+          )
         }
       })
       if (!result.ok) {

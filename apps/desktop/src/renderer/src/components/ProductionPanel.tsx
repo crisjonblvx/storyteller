@@ -19,6 +19,7 @@ import { ExpandableImagePreview } from '@renderer/components/ExpandableImagePrev
 import { InlineClipPlayer } from '@renderer/components/InlineClipPlayer'
 import { getSignedAssetUrl, uploadReferenceImageToStorage } from '@renderer/lib/storage-assets'
 import { getGatewayAccessToken } from '@renderer/lib/gateway-auth'
+import { normalizeGatewayErrorForDisplay } from '@renderer/lib/display-errors'
 import {
   attachProductionVideo,
   findBrollSlotForSoundbite,
@@ -352,9 +353,10 @@ export function ProductionPanel(props: ProductionPanelProps) {
         courtesyRegen: courtesyRegen || undefined
       })
       if (!res.ok) {
+        const errorMessage = normalizeGatewayErrorForDisplay(res.error)
         const failSeq = patchProductionSlotMetadata(baseSeq, slotRow.id, {
           status: 'failed',
-          errorMessage: res.error
+          errorMessage
         })
         await props.onPersistSequence(failSeq)
         props.onError(null)
@@ -377,7 +379,7 @@ export function ProductionPanel(props: ProductionPanelProps) {
       await props.onPersistSequence(next)
       setStatusLine('Preview ready — choose length and generate video when you are happy with the frame.')
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e)
+      const msg = normalizeGatewayErrorForDisplay(e instanceof Error ? e.message : String(e))
       const mappedSlot = findBrollSlotForSoundbite(props.sequence, props.soundbite.id)
       if (mappedSlot) {
         await props.onPersistSequence(
@@ -569,10 +571,11 @@ export function ProductionPanel(props: ProductionPanelProps) {
         accessToken: accessToken ?? undefined
       })
       if (!res.ok) {
+        const errorMessage = normalizeGatewayErrorForDisplay(res.error)
         await props.onPersistSequence(
           patchProductionSlotMetadata(baseSeq, slot.id, {
             status: 'failed',
-            errorMessage: res.error
+            errorMessage
           })
         )
         props.onError(null)
@@ -590,7 +593,7 @@ export function ProductionPanel(props: ProductionPanelProps) {
       await props.onPersistSequence(next)
       setStatusLine('Video attached to timeline.')
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e)
+      const msg = normalizeGatewayErrorForDisplay(e instanceof Error ? e.message : String(e))
       if (slot) {
         await props.onPersistSequence(
           patchProductionSlotMetadata(props.sequence, slot.id, {
@@ -1006,7 +1009,9 @@ export function ProductionPanel(props: ProductionPanelProps) {
 
       {statusLine && <div style={{ fontSize: 12, color: '#a1a1aa' }}>{statusLine}</div>}
       {slot?.status === 'failed' && slot.errorMessage && (
-        <div style={{ fontSize: 12, color: '#fca5a5' }}>{slot.errorMessage}</div>
+        <div style={{ fontSize: 12, color: '#fca5a5' }}>
+          {normalizeGatewayErrorForDisplay(slot.errorMessage)}
+        </div>
       )}
     </div>
   )

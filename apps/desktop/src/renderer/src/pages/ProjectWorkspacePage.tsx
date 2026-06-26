@@ -87,6 +87,7 @@ import { useProjectWorkflow, type PromptPackSelection } from '@renderer/stores/p
 import { useAuthStore } from '@renderer/stores/auth'
 import { supabase, supabaseConfigured } from '@renderer/lib/supabase'
 import { getGatewayAccessToken } from '@renderer/lib/gateway-auth'
+import { normalizeGatewayErrorForDisplay } from '@renderer/lib/display-errors'
 import { persistSoundbiteBrollIdeas } from '@renderer/lib/soundbite-ai-review'
 import { ProductionPanel, type ProductionPanelAi } from '@renderer/components/ProductionPanel'
 import { productionOffersForSoundbite } from '@renderer/lib/production-slot'
@@ -7238,7 +7239,7 @@ export function ProjectWorkspacePage() {
                                               : ''}
                                           {slot.status === 'failed' && slot.errorMessage ? (
                                             <div style={{ marginTop: 6, color: '#fca5a5' }}>
-                                              {slot.errorMessage}
+                                              {normalizeGatewayErrorForDisplay(slot.errorMessage)}
                                             </div>
                                           ) : null}
                                         </div>
@@ -8271,7 +8272,9 @@ export function ProjectWorkspacePage() {
                                       {formatSlotWindowLabel(slotForLabel)} · {slotForLabel.status}
                                       {placementLabel}
                                       {slotForLabel.status === 'failed' && slotForLabel.errorMessage ? (
-                                        <div style={{ marginTop: 6, color: '#fca5a5' }}>{slotForLabel.errorMessage}</div>
+                                        <div style={{ marginTop: 6, color: '#fca5a5' }}>
+                                          {normalizeGatewayErrorForDisplay(slotForLabel.errorMessage)}
+                                        </div>
                                       ) : null}
                                     </div>
                                   )}

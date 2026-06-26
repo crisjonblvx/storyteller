@@ -120,6 +120,11 @@ if (app.isPackaged && !process.env.STORYTELLER_GATEWAY_URL?.trim()) {
   process.env.STORYTELLER_GATEWAY_URL = PRODUCTION_GATEWAY_URL
 }
 
+const buildSha = process.env.STORYTELLER_BUILD_SHA?.trim()
+safeConsole(
+  'log',
+  `[storyteller] starting v${app.getVersion()}${buildSha ? ` (${buildSha})` : ''}`
+)
 
 const embeddedGateway = await startEmbeddedGateway({
   mainBundleDir: __dirname,

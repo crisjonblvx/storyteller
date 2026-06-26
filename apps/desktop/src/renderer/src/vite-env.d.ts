@@ -73,7 +73,15 @@ export type NleExportProgressPayload =
 
 export type AppStatus = {
   ok: true
-  app: { platform: string; electron: string; node: string; isPackaged: boolean }
+  app: {
+    version: string
+    buildSha: string | null
+    buildLabel: string
+    platform: string
+    electron: string
+    node: string
+    isPackaged: boolean
+  }
   ai: {
     /** Capability-routing mode. `unconfigured` means the gateway URL is missing. */
     mode: StorytellerAiMode

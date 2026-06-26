@@ -63,6 +63,7 @@ export default defineConfig({
       'process.env.STORYTELLER_AI_MODE': bake('STORYTELLER_AI_MODE'),
       'process.env.STORYTELLER_WHISPER_CONCURRENCY': bake('STORYTELLER_WHISPER_CONCURRENCY'),
       'process.env.STORYTELLER_DIRECTOR_MAX_CANDIDATES': bake('STORYTELLER_DIRECTOR_MAX_CANDIDATES'),
+      'process.env.STORYTELLER_BUILD_SHA': bake('STORYTELLER_BUILD_SHA'),
     },
     plugins: [
       externalizeDepsPlugin({

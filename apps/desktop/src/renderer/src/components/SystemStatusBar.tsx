@@ -189,7 +189,8 @@ export function SystemStatusBar(props: { compact?: boolean; align?: 'start' | 'e
           ))}
           {status && (
             <div style={{ marginTop: 8, fontSize: 11 }}>
-              Electron {status.app.electron} · Node {status.app.node} · {status.app.platform}
+              Storyteller {status.app.buildLabel} · Electron {status.app.electron} · Node{' '}
+              {status.app.node} · {status.app.platform}
             </div>
           )}
         </div>
