@@ -67,8 +67,10 @@ export function SystemStatusBar(props: { compact?: boolean; align?: 'start' | 'e
   const reviewReady =
     status?.ai.reviewReady ??
     (proxyMode || gatewayConfigured || Boolean(status?.ai.openaiConfigured) || VITE_REVIEW_READY)
+  const gatewayReachable = status?.ai.gatewayReachable
   const mediaReady =
-    status?.ai.mediaReady ?? (gatewayConfigured || proxyMode || VITE_MEDIA_READY)
+    status?.ai.mediaReady ??
+    (gatewayConfigured ? gatewayReachable === true : proxyMode || VITE_MEDIA_READY)
 
   const items: Array<{ label: string; ok: boolean; hint: string }> = [
     {
@@ -90,8 +92,24 @@ export function SystemStatusBar(props: { compact?: boolean; align?: 'start' | 'e
       ok: mediaReady,
       hint: mediaReady
         ? 'B-roll and motion generation are ready.'
-        : 'Sign in to Storyteller to enable AI media generation.'
-    }
+        : gatewayConfigured && gatewayReachable === false
+          ? 'Storyteller AI gateway is configured but not responding — preview generation may fail.'
+          : 'Sign in to Storyteller to enable AI media generation.'
+    },
+    ...(gatewayConfigured
+      ? [
+          {
+            label: 'AI gateway',
+            ok: gatewayReachable === true,
+            hint:
+              gatewayReachable === true
+                ? 'Hosted AI gateway is online.'
+                : gatewayReachable === false
+                  ? 'Gateway URL is set but /health did not respond — check deployment or network.'
+                  : 'Checking gateway connectivity…'
+          }
+        ]
+      : [])
   ]
 
   return (

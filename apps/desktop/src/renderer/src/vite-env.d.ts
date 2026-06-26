@@ -87,6 +87,8 @@ export type AppStatus = {
     proxyBaseUrl: string | null
     gatewayUrl?: string | null
     mediaGatewayEnabled?: boolean
+    gatewayReachable?: boolean
+    gatewayHealth?: object
     enableKling?: boolean
     enableByok?: boolean
   }

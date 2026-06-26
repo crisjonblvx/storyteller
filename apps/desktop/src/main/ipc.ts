@@ -45,12 +45,53 @@ import {
 
 const MAX_READ_BYTES = 600 * 1024 * 1024
 
+const GATEWAY_CONNECTION_ERROR_PACKAGED =
+  'Storyteller AI could not connect. Please try again in a moment.'
+const GATEWAY_CONNECTION_ERROR_DEV =
+  'Storyteller AI could not connect. The gateway may be offline or misconfigured.'
+
+function gatewayConnectionErrorMessage(): string {
+  return app.isPackaged ? GATEWAY_CONNECTION_ERROR_PACKAGED : GATEWAY_CONNECTION_ERROR_DEV
+}
+
+function isGatewayConnectionError(msg: string): boolean {
+  return (
+    /\bfetch failed\b/i.test(msg) ||
+    /\bStoryteller AI is unreachable:/i.test(msg) ||
+    /\bStoryteller AI could not connect\b/i.test(msg) ||
+    /\bECONNREFUSED\b/i.test(msg) ||
+    /\bENOTFOUND\b/i.test(msg) ||
+    /\bETIMEDOUT\b/i.test(msg)
+  )
+}
+
+async function pingGatewayHealth(gatewayUrl: string): Promise<{
+  gatewayReachable: boolean
+  gatewayHealth?: object
+}> {
+  const base = gatewayUrl?.trim()
+  if (!base) return { gatewayReachable: false }
+  try {
+    const res = await fetch(`${base.replace(/\/$/, '')}/health`, {
+      signal: AbortSignal.timeout(5000)
+    })
+    if (!res.ok) return { gatewayReachable: false }
+    const gatewayHealth = (await res.json().catch(() => undefined)) as object | undefined
+    return { gatewayReachable: true, gatewayHealth }
+  } catch {
+    return { gatewayReachable: false }
+  }
+}
+
 /**
  * Strip vendor/implementation details from error messages before they reach
  * the renderer. Users must never see API key names, provider names, internal
  * file paths, or developer docs references.
  */
 function sanitizeErrorMessage(msg: string): string {
+  if (isGatewayConnectionError(msg)) {
+    return gatewayConnectionErrorMessage()
+  }
   let s = msg
   // API key not configured
   s = s.replace(/OPENAI_API_KEY[^.]*\./gi, 'Storyteller AI service is not configured. Please contact support.')
@@ -59,9 +100,6 @@ function sanitizeErrorMessage(msg: string): string {
   s = s.replace(/see docs\/[^\s).]*/gi, '')
   // Strip file-system paths
   s = s.replace(/\/(?:Users|private|home|var|tmp|Applications)\/[^\s,;'"]+/g, '[path]')
-  // Raw network errors — replace before provider-name pass
-  s = s.replace(/\bfetch failed\b/gi, 'Storyteller AI could not connect. Check your internet connection and try again.')
-  s = s.replace(/\bStoryteller AI is unreachable:[^.]*\./gi, 'Storyteller AI could not connect. Check your internet connection and try again.')
   // Replace provider names with the product name
   s = s.replace(/\bWhisper\b/gi, 'Storyteller AI')
   s = s.replace(/\bOpenAI\b/gi, 'Storyteller AI')
@@ -117,6 +155,7 @@ export function registerIpc(): void {
     const gatewayUrl = resolveGatewayUrl(process.env)
     const mediaGateway = isMediaGatewayEnabled()
     const cfg = resolveAiGatewayConfig(process.env)
+    const gatewayPing = gatewayUrl ? await pingGatewayHealth(gatewayUrl) : { gatewayReachable: false }
     return {
       ok: true as const,
       app: {
@@ -129,7 +168,7 @@ export function registerIpc(): void {
         mode: cfg.mode,
         // Capability-oriented readiness signals — never leak provider names.
         reviewReady: cfg.mode === 'proxy' || Boolean(process.env.OPENAI_API_KEY?.trim()),
-        mediaReady: mediaGateway,
+        mediaReady: mediaGateway && gatewayPing.gatewayReachable,
         // Legacy fields kept for backwards compatibility with older renderer code.
         openaiConfigured: Boolean(process.env.OPENAI_API_KEY?.trim()),
         runwayConfigured:
@@ -138,6 +177,8 @@ export function registerIpc(): void {
         proxyBaseUrl: gatewayUrl,
         gatewayUrl,
         mediaGatewayEnabled: mediaGateway,
+        gatewayReachable: gatewayPing.gatewayReachable,
+        gatewayHealth: gatewayPing.gatewayHealth,
         enableKling: flags.enableKling,
         enableByok: flags.enableByok
       }

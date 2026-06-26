@@ -357,7 +357,7 @@ export function ProductionPanel(props: ProductionPanelProps) {
           errorMessage: res.error
         })
         await props.onPersistSequence(failSeq)
-        props.onError(res.error)
+        props.onError(null)
         return
       }
       const stillAsset = res.asset as Asset
@@ -387,7 +387,7 @@ export function ProductionPanel(props: ProductionPanelProps) {
           })
         )
       }
-      props.onError(msg)
+      props.onError(null)
     } finally {
       props.onBusyChange(null)
     }
@@ -575,7 +575,7 @@ export function ProductionPanel(props: ProductionPanelProps) {
             errorMessage: res.error
           })
         )
-        props.onError(res.error)
+        props.onError(null)
         return
       }
       const videoAssetResult = res.asset as Asset
@@ -599,7 +599,7 @@ export function ProductionPanel(props: ProductionPanelProps) {
           })
         )
       }
-      props.onError(msg)
+      props.onError(null)
     } finally {
       props.onBusyChange(null)
     }
