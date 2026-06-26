@@ -41,7 +41,7 @@ app.innerHTML = `
         </a>
         <a class="card" href="${cfg.downloads.macIntel}">
           <strong>Mac · Intel</strong>
-          <span>${cfg.productName}-${cfg.version}.dmg</span>
+          <span>${cfg.productName}-${cfg.version}-x64.dmg</span>
         </a>
         <a class="card" href="${cfg.downloads.win}">
           <strong>Windows</strong>

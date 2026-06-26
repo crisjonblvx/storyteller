@@ -2,7 +2,7 @@
 export function downloadConfig() {
   const owner = (import.meta.env.VITE_GITHUB_OWNER || 'crisjonblvx').trim()
   const repo = (import.meta.env.VITE_GITHUB_REPO || 'storyteller').trim()
-  const version = (import.meta.env.VITE_APP_VERSION || '1.0.0').trim()
+  const version = (import.meta.env.VITE_APP_VERSION || '1.0.1').trim()
   const productName = (import.meta.env.VITE_PRODUCT_NAME || 'Storyteller').trim()
 
   const tag = version.startsWith('v') ? version : `v${version}`
@@ -20,7 +20,7 @@ export function downloadConfig() {
     releasesUrl: `https://github.com/${owner}/${repo}/releases/latest`,
     downloads: {
       macArm64: asset(`${productName}-${version}-arm64.dmg`),
-      macIntel: asset(`${productName}-${version}.dmg`),
+      macIntel: asset(`${productName}-${version}-x64.dmg`),
       macUniversal: asset(`${productName}-${version}-universal.dmg`),
       win: asset(`${productName} Setup ${version}.exe`)
     }
