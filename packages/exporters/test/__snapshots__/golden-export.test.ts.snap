@@ -196,11 +196,7 @@ exports[`golden NLE export — Final Cut rough cut > interview-cuts — fcpxml +
   </resources>
   <library>
     <event name="B-Roll">
-      <clip name="interview-a-roll.mov">
-        <video>
-          <asset-clip ref="r2" offset="0s" name="interview-a-roll.mov" duration="108000/30s" start="0s"/>
-        </video>
-      </clip>
+      <asset-clip name="interview-a-roll.mov" ref="r2" duration="108000/30s" format="r1"/>
     </event>
     <event name="Storyteller Export">
       <project name="seq-proj-interview">
@@ -362,11 +358,7 @@ exports[`golden NLE export — Final Cut rough cut > interview-markers — fcpxm
   </resources>
   <library>
     <event name="B-Roll">
-      <clip name="interview-a-roll.mov">
-        <video>
-          <asset-clip ref="r2" offset="0s" name="interview-a-roll.mov" duration="108000/30s" start="0s"/>
-        </video>
-      </clip>
+      <asset-clip name="interview-a-roll.mov" ref="r2" duration="108000/30s" format="r1"/>
     </event>
     <event name="Storyteller Export">
       <project name="seq-proj-interview">
@@ -699,11 +691,7 @@ exports[`golden NLE export — Final Cut rough cut > long-form-podcast — fcpxm
   </resources>
   <library>
     <event name="B-Roll">
-      <clip name="interview-a-roll.mov">
-        <video>
-          <asset-clip ref="r2" offset="0s" name="interview-a-roll.mov" duration="108000/30s" start="0s"/>
-        </video>
-      </clip>
+      <asset-clip name="interview-a-roll.mov" ref="r2" duration="108000/30s" format="r1"/>
     </event>
     <event name="Storyteller Export">
       <project name="seq-proj-podcast">
@@ -1474,11 +1462,7 @@ exports[`golden NLE export — Final Cut rough cut > single-clip — fcpxml + ma
   </resources>
   <library>
     <event name="B-Roll">
-      <clip name="interview-a-roll.mov">
-        <video>
-          <asset-clip ref="r2" offset="0s" name="interview-a-roll.mov" duration="108000/30s" start="0s"/>
-        </video>
-      </clip>
+      <asset-clip name="interview-a-roll.mov" ref="r2" duration="108000/30s" format="r1"/>
     </event>
     <event name="Storyteller Export">
       <project name="seq-single">

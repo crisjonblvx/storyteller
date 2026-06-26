@@ -14,6 +14,27 @@ function escapeXml(s: string): string {
 }
 
 /**
+ * Final Cut Pro 12.0 rejects FCPXML imports outright when a `name=` attribute
+ * on an event, project, sequence, clip, or asset contains `/`, `\\`, `\r`, or
+ * `\n` ("You may not use '/' or the return key in names."). FCP turns events
+ * into folders and projects into files on disk, so these characters are not
+ * legal filesystem-name characters.
+ *
+ * This helper rewrites the offending characters so the *XML* attribute is
+ * accepted while leaving the original Storyteller bin/asset/project labels
+ * untouched in the source data. Apply BEFORE `escapeXml`.
+ */
+export function sanitizeFcpName(name: string | null | undefined): string {
+  if (name == null) return 'Untitled'
+  const cleaned = String(name)
+    .replace(/[/\\]/g, '-')
+    .replace(/[\r\n]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+  return cleaned.length > 0 ? cleaned : 'Untitled'
+}
+
+/**
  * Final Cut expects `file:` URIs with path segments percent-encoded (spaces, etc.).
  */
 export function toEncodedFileUri(raw: string): string {
@@ -99,6 +120,21 @@ function fileNameFromPathOrUri(raw: string): string {
   const uri = raw.startsWith('file://') ? raw : toEncodedFileUri(raw)
   const pathPart = uri.replace(/^file:\/\//, '').split('/').filter(Boolean).pop()
   return pathPart && pathPart.length > 0 ? decodeURIComponent(pathPart) : 'clip'
+}
+
+/**
+ * Still-image media (PNG, JPG, HEIC, …) carries no audio. Emitting
+ * `hasAudio="1" audioSources="1" audioChannels="2" audioRate="48000"` on a
+ * still asset produces FCP import warnings about missing/muted audio and can
+ * also confuse the audio preflight pass. Detect by file extension on the
+ * asset's local path or URI — Storyteller does not currently probe still
+ * images so we have no audio metadata to consult either way.
+ */
+function isStillImagePath(rawPath: string | undefined): boolean {
+  if (!rawPath) return false
+  const cleaned = rawPath.split('?')[0]?.split('#')[0] ?? ''
+  const name = cleaned.toLowerCase()
+  return /\.(png|jpe?g|heic|heif|webp|gif|tiff?|bmp)$/.test(name)
 }
 
 function maxSourceOutByAssetId(
@@ -439,7 +475,7 @@ function renderSpineAssetClip(
     probe?.original_filename && probe.original_filename.trim().length > 0
       ? probe.original_filename.trim()
       : fileNameFromPathOrUri(assetPathsById[clip.assetId] ?? '')
-  const displayName = escapeXml(displayNameRaw)
+  const displayName = escapeXml(sanitizeFcpName(displayNameRaw))
   const dur = clip.timelineOutSeconds - clip.timelineInSeconds
   // `offset`/`duration` live on the spine (sequence timebase). `start` is
   // an offset into the source media (source timebase). Mixing these caused
@@ -510,7 +546,7 @@ function renderConnectedClip(
     probe?.original_filename && probe.original_filename.trim().length > 0
       ? probe.original_filename.trim()
       : fileNameFromPathOrUri(assetPathsById[clip.assetId] ?? '')
-  const displayName = escapeXml(displayNameRaw)
+  const displayName = escapeXml(sanitizeFcpName(displayNameRaw))
   const dur = clip.timelineOutSeconds - clip.timelineInSeconds
   const offsetSec = clip.timelineInSeconds - parentSeqIn
   // Connected-clip offset: render in the parent's timebase. Using srcTb here
@@ -552,6 +588,7 @@ function buildFcpxmlBinEvents(params: {
   uniqueAssetIds: string[]
   assetPathsById: Record<string, string>
   storytellerIdToResourceId: Map<string, string>
+  assetIdToSourceFormatId: Map<string, string>
   probes: Map<string, FcpxmlAssetProbe>
   seqW: number
   seqH: number
@@ -563,6 +600,7 @@ function buildFcpxmlBinEvents(params: {
     uniqueAssetIds,
     assetPathsById,
     storytellerIdToResourceId,
+    assetIdToSourceFormatId,
     probes,
     seqW,
     seqH,
@@ -582,22 +620,38 @@ function buildFcpxmlBinEvents(params: {
     for (const asset of binAssets) {
       const resourceId = storytellerIdToResourceId.get(asset.id)
       if (!resourceId) continue
+      const formatId = assetIdToSourceFormatId.get(asset.id)
+      if (!formatId) continue
       const displayNameRaw =
         asset.original_filename?.trim() ||
         fileNameFromPathOrUri(assetPathsById[asset.id] ?? '')
-      const displayName = escapeXml(displayNameRaw)
+      const displayName = escapeXml(sanitizeFcpName(displayNameRaw))
       const spec = resolveSourceSpec(asset.id, probes.get(asset.id), seqW, seqH, seqFps)
       const srcTb = inferFcpTimebase(spec.fps)
       const probedDur = spec.durationSeconds != null && spec.durationSeconds > 0 ? spec.durationSeconds : 1
       const assetDuration = secondsToFcpRationalCeil(probedDur, srcTb)
-      clipLines.push(`      <clip name="${displayName}">
-        <video>
-          <asset-clip ref="${escapeXml(resourceId)}" offset="0s" name="${displayName}" duration="${assetDuration}" start="0s"/>
-        </video>
-      </clip>`)
+      // FCPXML 1.9 DTD: <clip> requires duration; <video> requires ref/duration
+      // and is a leaf (cannot contain <asset-clip>). The canonical FCP-emitted
+      // shape for an event browser entry is a bare <asset-clip> directly under
+      // <event>. The old <clip><video><asset-clip/></video></clip> wrapping
+      // failed DTD validation on Final Cut Pro 12.0 import.
+      //
+      // FCP 12.0 crash note: do NOT emit `tcFormat` on a bin browser
+      // <asset-clip>. Unlike a spine clip (which inherits a `tcStart` from
+      // its parent <sequence tcStart="0s" tcFormat="NDF">), an event-level
+      // asset-clip is parsed standalone via `newAssetClipOwnedClipsItem:` /
+      // `addClipFormtWithID:timecodeFormat:timecodeStart:`. With `tcFormat`
+      // present and no matching `tcStart`, FCP's
+      // `-[FFAnchoredObject setTimecodeDisplayDropFrame:]` asserts and
+      // aborts the import. The asset's own `<format>` (referenced via
+      // `format=`) already determines the frame rate / NDF nature, so the
+      // `tcFormat` attribute is redundant on browser entries.
+      clipLines.push(
+        `      <asset-clip name="${displayName}" ref="${escapeXml(resourceId)}" duration="${assetDuration}" format="${escapeXml(formatId)}"/>`
+      )
     }
     if (clipLines.length === 0) continue
-    eventLines.push(`    <event name="${escapeXml(binName)}">
+    eventLines.push(`    <event name="${escapeXml(sanitizeFcpName(binName))}">
 ${clipLines.join('\n')}
     </event>`)
   }
@@ -799,7 +853,7 @@ export function timelineToFcpxml(
       probe?.original_filename && probe.original_filename.trim().length > 0
         ? probe.original_filename.trim()
         : fileNameFromPathOrUri(rawPath)
-    const displayName = escapeXml(displayNameRaw)
+    const displayName = escapeXml(sanitizeFcpName(displayNameRaw))
     const assetClips = allClips.filter((c) => c.assetId === assetId)
     const maxOut = maxSourceExtentSeconds(assetClips, assetId)
     const oneFrameSec = srcTb.num / srcTb.den
@@ -835,7 +889,12 @@ export function timelineToFcpxml(
       typeof probe.width === 'number' && probe.width <= 0 &&
       typeof probe.height === 'number' && probe.height <= 0
     const hasVideoAttr = probeKnowsNoVideo ? '0' : '1'
-    const hasAudioAttr = '1'
+    // Still images (PNG/JPG/HEIC/…) carry no audio. Advertising hasAudio="1"
+    // on them triggers FCP audio-preflight warnings and can leave silent
+    // tracks attached to graphics. Default to hasAudio="1" for everything
+    // else because Storyteller's video assets nearly always have audio.
+    const isStill = isStillImagePath(rawPath)
+    const hasAudioAttr = isStill ? '0' : '1'
     const videoSourcesAttr = hasVideoAttr === '1' ? ' videoSources="1"' : ''
     const audioAttrs =
       hasAudioAttr === '1' ? ' audioSources="1" audioChannels="2" audioRate="48000"' : ''
@@ -870,7 +929,7 @@ export function timelineToFcpxml(
         sfxAssetIdToResourceId.set(clip.assetId, sfxRid)
         storytellerIdToResourceId.set(clip.assetId, sfxRid)
         const sfxUri = toEncodedFileUri(clip.localPath)
-        const sfxFileName = escapeXml(clip.localPath.split('/').pop() ?? 'sfx')
+        const sfxFileName = escapeXml(sanitizeFcpName(clip.localPath.split('/').pop() ?? 'sfx'))
         const sfxDurSec = Math.max(clip.sourceOutSeconds, 0.1) + 4 * (seqTb.num / seqTb.den)
         const sfxDuration = secondsToFcpRationalCeil(sfxDurSec, seqTb)
         assetBlocks.push(`    <asset id="${sfxRid}" uid="${escapeXml(clip.assetId)}" name="${sfxFileName}" start="0s" duration="${sfxDuration}" hasVideo="0" hasAudio="1" audioSources="1" audioChannels="2" audioRate="48000" format="${escapeXml(seqFormatId)}">
@@ -1196,6 +1255,7 @@ ${spineIndent}</gap>`)
     uniqueAssetIds,
     assetPathsById,
     storytellerIdToResourceId,
+    assetIdToSourceFormatId,
     probes,
     seqW,
     seqH,
@@ -1211,7 +1271,7 @@ ${resourcesInner}
   </resources>
   <library>
 ${binEventsXml ? `${binEventsXml}\n` : ''}    <event name="Storyteller Export">
-      <project name="${escapeXml(sequence.id)}">
+      <project name="${escapeXml(sanitizeFcpName(sequence.id))}">
         <sequence duration="${sequenceDurationR}" format="${escapeXml(seqFormatId)}" tcStart="0s" tcFormat="NDF">
           <spine>
 ${spineBody}
