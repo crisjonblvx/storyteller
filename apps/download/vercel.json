@@ -1,4 +1,6 @@
 {
+  "buildCommand": "npm run download:build",
+  "outputDirectory": "apps/download/dist",
   "rewrites": [
     { "source": "/storyteller", "destination": "/storyteller/index.html" },
     { "source": "/storyteller/", "destination": "/storyteller/index.html" },
