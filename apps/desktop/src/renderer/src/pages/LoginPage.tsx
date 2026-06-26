@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@renderer/stores/auth'
+import { markIntroPending } from '@renderer/components/PostLoginIntro'
 import { supabaseConfigured } from '@renderer/lib/supabase'
 import { SystemStatusBar } from '@renderer/components/SystemStatusBar'
 
@@ -18,7 +19,10 @@ export function LoginPage() {
     const fn = mode === 'signin' ? signIn : signUp
     const res = await fn(email, password)
     if (res.error) setError(res.error)
-    else navigate('/')
+    else {
+      markIntroPending()
+      navigate('/')
+    }
   }
 
   return (
@@ -94,6 +98,7 @@ export function LoginPage() {
           type="button"
           onClick={() => {
             enterDemo()
+            markIntroPending()
             navigate('/')
           }}
           style={{ ...ghostBtn, width: '100%', marginTop: 12 }}

@@ -30,13 +30,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
   signIn: async (email, password) => {
     if (!supabase) return { error: 'Supabase not configured' }
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    return error ? { error: error.message } : {}
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) return { error: error.message }
+    set({ user: data.user, demo: false, loading: false })
+    return {}
   },
   signUp: async (email, password) => {
     if (!supabase) return { error: 'Supabase not configured' }
-    const { error } = await supabase.auth.signUp({ email, password })
-    return error ? { error: error.message } : {}
+    const { data, error } = await supabase.auth.signUp({ email, password })
+    if (error) return { error: error.message }
+    if (data.user) set({ user: data.user, demo: false, loading: false })
+    return {}
   },
   signOut: async () => {
     if (get().demo) {

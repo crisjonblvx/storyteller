@@ -64,7 +64,7 @@
     "asarUnpack": [
       "**/node_modules/ffprobe-static/**",
       "**/node_modules/ffmpeg-static/**",
-      "out/renderer/storyteller-intro-animation.mp4"
+      "out/renderer/assets/storyteller-intro-animation*.mp4"
     ],
     "afterSign": "build/notarize.mjs",
     "mac": {

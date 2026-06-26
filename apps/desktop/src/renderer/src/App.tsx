@@ -8,9 +8,10 @@ import { ProjectSetupPage } from '@renderer/pages/ProjectSetupPage'
 import { ProjectWorkspacePage } from '@renderer/pages/ProjectWorkspacePage'
 import { QuickReelPage } from '@renderer/pages/QuickReelPage'
 import { AssetLibraryPage } from '@renderer/pages/AssetLibraryPage'
+import { PostLoginIntro } from '@renderer/components/PostLoginIntro'
 
 function Protected({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuthStore()
+  const { user, demo, loading } = useAuthStore()
   const loc = useLocation()
   if (loading) {
     return (
@@ -19,7 +20,7 @@ function Protected({ children }: { children: React.ReactNode }) {
       </div>
     )
   }
-  if (!user) return <Navigate to="/login" replace state={{ from: loc.pathname }} />
+  if (!user && !demo) return <Navigate to="/login" replace state={{ from: loc.pathname }} />
   return <>{children}</>
 }
 
@@ -86,6 +87,7 @@ export default function App() {
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
     </RouteErrorBoundary>
+    <PostLoginIntro />
     </>
   )
 }
