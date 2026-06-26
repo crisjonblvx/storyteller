@@ -11,7 +11,7 @@ import type {
   StorytellerUsageHistory,
   GatewayErrorBody
 } from './account-types.js'
-import { parseGatewayErrorBody } from './account-types.js'
+import { parseGatewayErrorBody, GatewayRequestError } from './account-types.js'
 
 export interface StorytellerGatewayClientOptions {
   baseUrl: string

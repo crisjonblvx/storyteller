@@ -14,6 +14,7 @@ import newsPackageImg from '@renderer/assets/cards/news-package.png'
 import documentaryImg from '@renderer/assets/cards/documentary.png'
 import socialReelImg from '@renderer/assets/cards/social-reel.png'
 import eventHighlightImg from '@renderer/assets/cards/event-highlight.png'
+import sportsHighlightImg from '@renderer/assets/cards/sports-highlight.png'
 import brandStoryImg from '@renderer/assets/cards/brand-story.png'
 
 // ─── Story type definitions ───────────────────────────────────────────────────
@@ -34,7 +35,7 @@ const STORY_TYPES: StoryType[] = [
     title: 'Sports Highlight Reel',
     description: 'Build your highlight reel. Drop in game footage, plays, and celebrations — Storyteller edits it to music, paced like the pros.',
     gradient: 'linear-gradient(135deg, rgba(14,165,233,0.88) 0%, rgba(2,132,199,0.7) 50%, rgba(8,47,73,0.75) 100%)',
-    cardImage: eventHighlightImg,
+    cardImage: sportsHighlightImg,
     icon: '⚡',
     mode: 'highlight',
   },
@@ -377,7 +378,7 @@ export function ProjectSetupPage() {
                       onMouseLeave={() => setHoveredIntent(null)}
                       style={
                         type.intent === 'sports_highlight'
-                          ? sportsHeroCard(isSelected, isHovered)
+                          ? sportsHeroCard(type.gradient, type.cardImage, isSelected, isHovered)
                           : storyCard(type.gradient, type.cardImage, isSelected, isHovered)
                       }
                     >
@@ -960,15 +961,18 @@ const panelFooter: React.CSSProperties = {
 
 // ─── Sports hero card (spans full row) ────────────────────────────────────────
 
-function sportsHeroCard(selected: boolean, hovered: boolean): React.CSSProperties {
+function sportsHeroCard(
+  gradient: string,
+  cardImage: string,
+  selected: boolean,
+  hovered: boolean
+): React.CSSProperties {
   return {
     position: 'relative',
     gridColumn: '1 / -1',
-    height: 140,
+    height: 160,
     borderRadius: 16,
-    background: selected
-      ? 'linear-gradient(135deg, rgba(14,165,233,0.92) 0%, rgba(2,132,199,0.75) 40%, rgba(8,47,73,0.9) 100%)'
-      : 'linear-gradient(135deg, rgba(14,165,233,0.82) 0%, rgba(2,132,199,0.6) 40%, rgba(8,47,73,0.8) 100%)',
+    background: `${gradient}, url(${cardImage}) center/cover no-repeat`,
     border: selected
       ? '2px solid #38bdf8'
       : hovered
@@ -988,6 +992,7 @@ function sportsHeroCard(selected: boolean, hovered: boolean): React.CSSPropertie
     textAlign: 'left',
     transition: 'all 0.15s ease',
     transform: hovered ? 'translateY(-2px)' : 'translateY(0)',
+    filter: hovered && !selected ? 'brightness(1.08)' : 'none',
     overflow: 'hidden',
   }
 }
@@ -999,13 +1004,15 @@ const sportsCardTitle: React.CSSProperties = {
   marginBottom: 6,
   lineHeight: 1.2,
   letterSpacing: '-0.01em',
+  textShadow: '0 2px 12px rgba(0,0,0,0.55)',
 }
 
 const sportsCardDesc: React.CSSProperties = {
   fontSize: 13,
-  color: 'rgba(255,255,255,0.8)',
+  color: 'rgba(255,255,255,0.92)',
   lineHeight: 1.5,
   maxWidth: 520,
+  textShadow: '0 1px 8px rgba(0,0,0,0.5)',
 }
 
 const sportsCheckBadge: React.CSSProperties = {
