@@ -230,18 +230,6 @@ export function ProjectSetupPage() {
     return isNew && !localStorage.getItem('storyteller_intro_seen_v3')
   })
 
-  if (showIntro) {
-    return (
-      <IntroSplashScreen
-        onComplete={() => {
-          localStorage.setItem('storyteller_intro_seen_v3', '1')
-          setShowIntro(false)
-        }}
-        onErrorDismiss={() => setShowIntro(false)}
-      />
-    )
-  }
-
   const existing = useMemo(
     () => (!isNew && projectId ? projects.find((p) => p.id === projectId) : undefined),
     [isNew, projectId, projects]
@@ -313,6 +301,18 @@ export function ProjectSetupPage() {
     },
     [createLocalProject, isNew, selectedIntent, navigate, projectId, primaryGoal, aspectRatio, title, updateProject, setupStep, selectedSport, selectedTemplate]
   )
+
+  if (showIntro) {
+    return (
+      <IntroSplashScreen
+        onComplete={() => {
+          localStorage.setItem('storyteller_intro_seen_v3', '1')
+          setShowIntro(false)
+        }}
+        onErrorDismiss={() => setShowIntro(false)}
+      />
+    )
+  }
 
   if (!isNew && projectId && !existing) {
     return (
