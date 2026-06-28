@@ -192,6 +192,72 @@ describe('capability media-generate', () => {
     const body = res.json() as Record<string, unknown>
     assert.equal(typeof body.provider, 'string')
   })
+
+  it('enforces the starter AI video allowance on the fourth generation', async () => {
+    const built = await buildTestServer()
+    const limitedApp = built.app
+    try {
+      const limitedHeaders = { authorization: fakeBearer('starter-limit-user', '[email protected]') }
+      for (let i = 0; i < 3; i++) {
+        const ok = await limitedApp.inject({
+          method: 'POST',
+          url: '/v1/capabilities/media-generate',
+          headers: limitedHeaders,
+          payload: {
+            projectId: `starter-limit-${i}`,
+            capability: 'video-clip-from-text',
+            creativeMode: 'cinematic_documentary',
+            prompt: `Starter allowance test clip ${i + 1}`
+          }
+        })
+        assert.equal(ok.statusCode, 200)
+      }
+
+      const blocked = await limitedApp.inject({
+        method: 'POST',
+        url: '/v1/capabilities/media-generate',
+        headers: limitedHeaders,
+        payload: {
+          projectId: 'starter-limit-4',
+          capability: 'video-clip-from-text',
+          creativeMode: 'cinematic_documentary',
+          prompt: 'Starter allowance test clip 4'
+        }
+      })
+      assert.equal(blocked.statusCode, 402)
+      const body = blocked.json() as { code: string; message: string }
+      assert.equal(body.code, 'ALLOWANCE_EXCEEDED')
+      assert.match(body.message, /AI Video limit reached/)
+    } finally {
+      await limitedApp.close()
+    }
+  })
+
+  it('lets owner-plan overrides bypass the starter AI video allowance', async () => {
+    process.env.STORYTELLER_OWNER_EMAILS = '[email protected]'
+    const built = await buildTestServer()
+    const ownerApp = built.app
+    try {
+      const ownerHeaders = { authorization: fakeBearer('owner-override-user', '[email protected]') }
+      for (let i = 0; i < 4; i++) {
+        const res = await ownerApp.inject({
+          method: 'POST',
+          url: '/v1/capabilities/media-generate',
+          headers: ownerHeaders,
+          payload: {
+            projectId: `owner-allowance-${i}`,
+            capability: 'video-clip-from-text',
+            creativeMode: 'cinematic_documentary',
+            prompt: `Owner allowance test clip ${i + 1}`
+          }
+        })
+        assert.equal(res.statusCode, 200)
+      }
+    } finally {
+      delete process.env.STORYTELLER_OWNER_EMAILS
+      await ownerApp.close()
+    }
+  })
 })
 
 describe('capability media-jobs status', () => {

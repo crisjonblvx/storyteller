@@ -42,6 +42,28 @@ describe('account endpoints', () => {
     assert.ok(!('provider' in body))
   })
 
+  it('surfaces owner plan details for allowlisted founder accounts', async () => {
+    process.env.STORYTELLER_OWNER_EMAILS = '[email protected]'
+    const built = await buildTestServer({
+      credits: new InMemoryCreditsService(100)
+    })
+    const ownerApp = built.app
+    try {
+      const res = await ownerApp.inject({
+        method: 'GET',
+        url: '/v1/capabilities/account',
+        headers: { authorization: fakeBearer('owner-account-user', '[email protected]') }
+      })
+      assert.equal(res.statusCode, 200)
+      const body = res.json() as Record<string, unknown>
+      assert.equal(body.planId, 'owner')
+      assert.equal(body.planLabel, 'Owner')
+    } finally {
+      delete process.env.STORYTELLER_OWNER_EMAILS
+      await ownerApp.close()
+    }
+  })
+
   it('returns usage history without provider names', async () => {
     const created = await app.inject({
       method: 'POST',

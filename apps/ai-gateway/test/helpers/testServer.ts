@@ -77,10 +77,8 @@ export async function buildTestServer(
 }
 
 /** Make a fake unsigned JWT that verifySupabaseJwt's dev-mode fallback accepts. */
-export function fakeBearer(sub = 'test-user-id'): string {
+export function fakeBearer(sub = 'test-user-id', email = '[email protected]'): string {
   const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url')
-  const payload = Buffer.from(JSON.stringify({ sub, email: '[email protected]' })).toString(
-    'base64url'
-  )
+  const payload = Buffer.from(JSON.stringify({ sub, email })).toString('base64url')
   return `Bearer ${header}.${payload}.sig`
 }

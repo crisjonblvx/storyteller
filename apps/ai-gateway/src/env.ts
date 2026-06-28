@@ -26,6 +26,9 @@ export interface GatewayEnv {
   stripeBillingCancelUrl: string
   /** Server-only admin dashboard password / signing secret. Never expose via VITE_*. */
   storytellerAdminSecret: string | null
+  /** Internal accounts that should resolve to the owner plan automatically. */
+  storytellerOwnerEmails: string[]
+  storytellerOwnerUserIds: string[]
 }
 
 export function loadEnv(): GatewayEnv {
@@ -64,6 +67,8 @@ export function loadEnv(): GatewayEnv {
     storytellerAdminSecret:
       trimOrNull(process.env.STORYTELLER_ADMIN_PASSWORD) ??
       trimOrNull(process.env.STORYTELLER_ADMIN_SECRET),
+    storytellerOwnerEmails: parseList(process.env.STORYTELLER_OWNER_EMAILS, { lowercase: true }),
+    storytellerOwnerUserIds: parseList(process.env.STORYTELLER_OWNER_USER_IDS),
   }
 }
 
@@ -76,6 +81,22 @@ function parseBool(raw: string | undefined, defaultValue: boolean): boolean {
   if (raw === undefined || raw === '') return defaultValue
   const v = raw.trim().toLowerCase()
   return v === '1' || v === 'true' || v === 'yes' || v === 'on'
+}
+
+function parseList(
+  raw: string | undefined,
+  opts?: {
+    lowercase?: boolean
+  }
+): string[] {
+  if (!raw?.trim()) return []
+  const out = new Set<string>()
+  for (const part of raw.split(',')) {
+    const trimmed = part.trim()
+    if (!trimmed) continue
+    out.add(opts?.lowercase ? trimmed.toLowerCase() : trimmed)
+  }
+  return [...out]
 }
 
 export { parseBool }

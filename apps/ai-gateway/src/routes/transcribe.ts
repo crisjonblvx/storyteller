@@ -10,6 +10,7 @@ import { Readable } from 'node:stream'
 import type { MeteringUnitId } from '@storyteller/ai-gateway'
 import type { CreditsService } from '@storyteller/ai-gateway'
 import type { GatewayEnv } from '../env.js'
+import { resolveEffectivePlanId } from '../auth/ownerPlan.js'
 import { verifySupabaseJwt } from '../auth/verifySupabaseJwt.js'
 import { GatewayError, normalizeError } from '../utils/errors.js'
 import { whisperFromBytes } from '../services/openaiWhisper.js'
@@ -64,7 +65,8 @@ export async function registerTranscribeRoutes(
 
           // ── Allowance gate ────────────────────────────────────────────────
           const summary = await credits.getAccountSummary(user.id)
-          const allowCheck = await allowances.checkAndConsume(user.id, meteringUnit, summary.planId)
+          const effectivePlanId = resolveEffectivePlanId(user, summary.planId, env)
+          const allowCheck = await allowances.checkAndConsume(user.id, meteringUnit, effectivePlanId)
           if (!allowCheck.ok) {
             return reply.status(402).send({
               ok: false,

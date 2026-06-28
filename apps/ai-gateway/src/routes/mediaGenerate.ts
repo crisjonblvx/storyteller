@@ -14,6 +14,7 @@ import {
   selectStillFallbackProvider
 } from '@storyteller/ai-gateway/server'
 import type { GatewayEnv } from '../env.js'
+import { resolveEffectivePlanId } from '../auth/ownerPlan.js'
 import { verifySupabaseJwt } from '../auth/verifySupabaseJwt.js'
 import { GatewayError, normalizeError } from '../utils/errors.js'
 import { log } from '../utils/logger.js'
@@ -39,7 +40,7 @@ export function registerMediaGenerateRoutes(app: FastifyInstance, deps: MediaGen
       const user = await verifySupabaseJwt(req.headers.authorization, deps.env)
       const body = req.body as GenerateMediaRequest
       validateGenerateRequest(body)
-      const result = await startMediaJob(deps, user.id, body, { capability: body.intent })
+      const result = await startMediaJob(deps, user, body, { capability: body.intent })
       return reply.send(result satisfies GenerateMediaResponse)
     } catch (e) {
       return sendError(reply, e)
@@ -58,7 +59,7 @@ export function registerMediaGenerateRoutes(app: FastifyInstance, deps: MediaGen
         ...internal.metadata,
         capability: body.capability
       }
-      const internalResult = await startMediaJob(deps, user.id, internal, {
+      const internalResult = await startMediaJob(deps, user, internal, {
         capability: body.capability
       })
       const capabilityResult: GenerateMediaCapabilityResponse = {
@@ -76,7 +77,7 @@ export function registerMediaGenerateRoutes(app: FastifyInstance, deps: MediaGen
 
 async function startMediaJob(
   deps: MediaGenerateDeps,
-  userId: string,
+  user: Awaited<ReturnType<typeof verifySupabaseJwt>>,
   body: GenerateMediaRequest,
   observability?: { capability?: string }
 ): Promise<GenerateMediaResponse> {
@@ -125,7 +126,8 @@ async function startMediaJob(
 
   if (!body.courtesyRegen) {
     // Fetch account summary once — used for both the credit check and the plan-tier allowance check.
-    const summary = await deps.credits.getAccountSummary(userId)
+    const summary = await deps.credits.getAccountSummary(user.id)
+    const effectivePlanId = resolveEffectivePlanId(user, summary.planId, deps.env)
     if (summary.available < estimatedCredits) {
       throw new GatewayError(
         `Insufficient credits (need ${estimatedCredits}, have ${summary.available}).`,
@@ -140,7 +142,7 @@ async function startMediaJob(
       body.intent === 'motion_graphic' ||
       body.intent === 'image_to_video'
     ) {
-      const allowCheck = await deps.allowances.checkAndConsume(userId, 'ai_video', summary.planId)
+      const allowCheck = await deps.allowances.checkAndConsume(user.id, 'ai_video', effectivePlanId)
       if (!allowCheck.ok) {
         throw new GatewayError(allowCheck.message, 'ALLOWANCE_EXCEEDED', 402)
       }
@@ -148,14 +150,14 @@ async function startMediaJob(
   }
 
   const job = await deps.store.create({
-    userId,
+    userId: user.id,
     request: body,
     provider: providerName,
     creditsReserved: estimatedCredits
   })
 
   if (!body.courtesyRegen) {
-    await deps.credits.reserve(userId, estimatedCredits, job.jobId)
+    await deps.credits.reserve(user.id, estimatedCredits, job.jobId)
   }
   deps.runner.rememberRequest(job.jobId, body)
 
@@ -169,7 +171,7 @@ async function startMediaJob(
 
   log.info('job_queued', {
     jobId: job.jobId,
-    userId,
+    userId: user.id,
     projectId: body.projectId,
     intent: body.intent,
     capability: observability?.capability ?? body.metadata?.capability,

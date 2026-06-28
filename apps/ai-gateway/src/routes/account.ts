@@ -9,6 +9,7 @@ import {
 } from '@storyteller/ai-gateway'
 import type { CreditsService } from '@storyteller/ai-gateway'
 import type { GatewayEnv } from '../env.js'
+import { resolveEffectivePlanId } from '../auth/ownerPlan.js'
 import { verifySupabaseJwt } from '../auth/verifySupabaseJwt.js'
 import { GatewayError, normalizeError } from '../utils/errors.js'
 import type { JobStorePort } from '../jobs/jobStorePort.js'
@@ -33,7 +34,8 @@ export function registerAccountRoutes(app: FastifyInstance, deps: AccountRouteDe
     try {
       const user = await verifySupabaseJwt(req.headers.authorization, deps.env)
       const summary = await deps.credits.getAccountSummary(user.id)
-      const plan = getPlanDefinition(summary.planId)
+      const effectivePlanId = resolveEffectivePlanId(user, summary.planId, deps.env)
+      const plan = getPlanDefinition(effectivePlanId)
       const mediaEnabled = summary.available > 0
       const body: StorytellerAccountSummaryWire = {
         planId: plan.id,
