@@ -16,6 +16,15 @@ if [[ -n "$STORYTELLER_BUILD_SHA" ]]; then
   echo "Build SHA: ${STORYTELLER_BUILD_SHA}"
 fi
 
+
+# Audio Director stays out of beta/production DMGs unless explicitly opted in.
+# process.env wins over .env at Vite build time, so this blocks accidental enablement.
+if [[ "${STORYTELLER_AUDIO_DIRECTOR_BUILD:-false}" != "true" ]]; then
+  export VITE_AUDIO_DIRECTOR_ENABLED=
+else
+  echo "Audio Director build: VITE_AUDIO_DIRECTOR_ENABLED=${VITE_AUDIO_DIRECTOR_ENABLED:-true}"
+fi
+
 cd "$ROOT"
 npm run build --workspace=@storyteller/desktop
 

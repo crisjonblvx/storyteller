@@ -10,6 +10,7 @@ import {
   generateAudioDirectorFallback
 } from '@storyteller/analysis'
 import { getGatewayAccessToken } from '@renderer/lib/gateway-auth'
+import { FEATURES } from '@renderer/lib/feature-flags'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -203,6 +204,8 @@ export function SoundDesignerPanel({
   onAudioDnaChange,
   onSequenceChange
 }: SoundDesignerPanelProps) {
+  if (!FEATURES.audioDirector) return null
+
   const [phase, setPhase] = useState<AnalysisPhase>(() =>
     (sequence.soundDesignSlots?.length ?? 0) > 0 ? 'ready' : 'idle'
   )

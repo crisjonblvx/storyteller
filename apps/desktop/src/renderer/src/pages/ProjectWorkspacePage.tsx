@@ -144,19 +144,35 @@ import {
 import { useLocalAssetsStore } from '@renderer/stores/local-assets'
 import { useLocalTimelineStore } from '@renderer/stores/local-timeline'
 import { getIntentColors } from '@renderer/lib/intent-colors'
+import { FEATURES } from '@renderer/lib/feature-flags'
 import { SoundDesignerPanel } from '@renderer/components/SoundDesignerPanel'
 
 type StepId = 'upload' | 'goal' | 'review' | 'timeline' | 'enhance' | 'audio' | 'export'
 
-const WORKFLOW_STEPS: { id: StepId; label: string; description: string }[] = [
-  { id: 'upload', label: '1. Upload', description: 'Add media' },
-  { id: 'goal', label: '2. Goal', description: 'Direct story' },
-  { id: 'review', label: '3. Review', description: 'Moments' },
-  { id: 'timeline', label: '4. Timeline', description: 'Build cut' },
-  { id: 'enhance', label: '5. Enhance', description: 'B-roll & Top Layer' },
-  { id: 'audio', label: '6. Audio Director', description: 'Sound design' },
-  { id: 'export', label: '7. Export', description: 'Deliver' }
+type WorkflowStep = { id: StepId; label: string; description: string }
+
+const WORKFLOW_STEP_DEFS: { id: StepId; name: string; description: string }[] = [
+  { id: 'upload', name: 'Upload', description: 'Add media' },
+  { id: 'goal', name: 'Goal', description: 'Direct story' },
+  { id: 'review', name: 'Review', description: 'Moments' },
+  { id: 'timeline', name: 'Timeline', description: 'Build cut' },
+  { id: 'enhance', name: 'Enhance', description: 'B-roll & Top Layer' },
+  { id: 'audio', name: 'Audio Director', description: 'Sound design' },
+  { id: 'export', name: 'Export', description: 'Deliver' }
 ]
+
+function buildWorkflowSteps(): WorkflowStep[] {
+  const defs = FEATURES.audioDirector
+    ? WORKFLOW_STEP_DEFS
+    : WORKFLOW_STEP_DEFS.filter((step) => step.id !== 'audio')
+  return defs.map((step, i) => ({
+    id: step.id,
+    label: `${i + 1}. ${step.name}`,
+    description: step.description
+  }))
+}
+
+const WORKFLOW_STEPS = buildWorkflowSteps()
 
 const GROUNDED_REVIEW_VERSION = 23
 
@@ -734,7 +750,7 @@ const EXPORT_PRESETS = [
 ] as const
 
 function StepRail({ steps, activeStep, onStepClick, intentColors }: { 
-  steps: typeof WORKFLOW_STEPS, 
+  steps: WorkflowStep[], 
   activeStep: StepId, 
   onStepClick: (step: StepId) => void,
   intentColors: { border: string; glow: string; text: string; gradient: string }
@@ -918,6 +934,11 @@ export function ProjectWorkspacePage() {
   const [pathVerify, setPathVerify] = useState<'idle' | 'checking' | 'ok' | 'missing'>('idle')
 
   const [activeStep, setActiveStep] = useState<StepId>('upload')
+  useEffect(() => {
+    if (!FEATURES.audioDirector && activeStep === 'audio') {
+      setActiveStep('export')
+    }
+  }, [activeStep])
   const [journalismAssembling, setJournalismAssembling] = useState(false)
   const [journalismAssembleError, setJournalismAssembleError] = useState<string | null>(null)
   const [creatorAssembling, setCreatorAssembling] = useState(false)
@@ -2426,6 +2447,7 @@ export function ProjectWorkspacePage() {
   const pauseGapsList = useMemo(() => listPauseGaps(sequence), [sequence])
 
   const soundDesignPayload = useMemo(() => {
+    if (!FEATURES.audioDirector) return undefined
     const slots = sequence.soundDesignSlots ?? []
     const acceptedSlots = slots.filter((s) => s.status === 'accepted')
     if (acceptedSlots.length === 0) return undefined
@@ -8586,7 +8608,7 @@ export function ProjectWorkspacePage() {
                 </div>
               )}
 
-              {activeStep === 'audio' && (
+              {FEATURES.audioDirector && activeStep === 'audio' && (
                 <div className="step-content">
                   <SoundDesignerPanel
                     projectId={projectId}
@@ -8604,7 +8626,9 @@ export function ProjectWorkspacePage() {
               {activeStep === 'export' && (
                 <div className="step-content">
                   <div style={stepHeader}>
-                    <h2 style={stepTitle}>7. Export</h2>
+                    <h2 style={stepTitle}>
+                      {WORKFLOW_STEPS.find((s) => s.id === 'export')?.label ?? 'Export'}
+                    </h2>
                     <p style={stepDesc}>Render an MP4 or export a handoff package for your NLE.</p>
                   </div>
                   

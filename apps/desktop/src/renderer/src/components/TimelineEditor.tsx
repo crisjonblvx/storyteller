@@ -27,6 +27,9 @@ import {
   parseAssetDragPayload,
   type AssetDragPayload
 } from '@renderer/hooks/useAssetLibrary'
+import { FEATURES } from '@renderer/lib/feature-flags'
+
+const SOUND_DESIGN_TRACK_PREFIX = 'a-sfx-'
 
 interface TimelineEditorProps {
   sequence: TimelineSequence
@@ -195,6 +198,12 @@ export function TimelineEditor({
     })
     return Math.max(max, 30)
   }, [sequence])
+
+  const displayAudioTracks = useMemo(() => {
+    const tracks = sequence.audioTracks ?? []
+    if (FEATURES.audioDirector) return tracks
+    return tracks.filter((track) => !track.id.startsWith(SOUND_DESIGN_TRACK_PREFIX))
+  }, [sequence.audioTracks])
 
   const timelineWidth = Math.max(totalDuration * pxPerSec, 800)
 
@@ -1605,7 +1614,7 @@ export function TimelineEditor({
               })}
 
               {/* Audio Tracks */}
-              {sequence.audioTracks.map((track, i) => (
+              {displayAudioTracks.map((track, i) => (
                 <div key={track.id} style={{ display: 'flex', height: 48, position: 'relative', background: 'rgba(255,255,255,0.01)' }}>
                   <div style={trackLabelStyle}>A{i + 1}</div>
                   <div onMouseDown={handleTimelineSurfaceMouseDown} style={{ flex: 1, position: 'relative' }}>
